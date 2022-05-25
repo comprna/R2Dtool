@@ -10,26 +10,38 @@ library(GenomicFeatures)
 library(rtracklayer)
 library(tidyverse)
 
+# test data 
+# args <- c("~/Documents/txannotate/test/liftover_output.txt.tempbed", "~/Documents/txannotate/test/liftover_output.txt.temp.gtf", "~/Documents/txannotate/test/liftover_output.txt")
+
 ################################################################################
 ################################################################################
 ################################################################################
 
 # lift-over the bed-like tsv of transcriptomic sites to their cognate genomic sites
 
+# read in reference transcripts
+gtf <- makeTxDbFromGFF(file=args[2], format = "gtf")
+
+# make an exon database from the reference transcripts
+exons <- exonsBy(gtf, "tx", use.names=TRUE)
+
+# prepare the exons 
+exons_tib <- as_tibble(as(exons, "data.frame"))
+
 # import bed file of transcriptome alignments
-mappedLocus <- read_tsv(file = args[2], col_names = F) %>%
-  dplyr::rename(transcript_id = 1, start = 2, end = 3, name = 4, score = 5, strand = 6) %>%
-  dplyr::select(-strand) # %>%
-  # separate(transcript, into=c("transcript_id", "transcript_version"), sep = "([.])", extra = "merge") %>%
-  # dplyr::select(-transcript_version)
+mappedLocus <- read_tsv(file = args[1], col_names = F) %>%
+  dplyr::rename(transcript = 1, start = 2, end = 3, name = 4, score = 5, strand = 6) %>%
+  dplyr::select(-strand) %>%
+  separate(transcript, into=c("transcript_id", "transcript_version"), sep = "([.])", extra = "merge") %>%
+  dplyr::select(-transcript_version)
 
 # make lookup table for strand
 print("preparing strand lookup table")
 strand_lookup <- exons_tib %>%
   dplyr::rename(transcript_id = group_name) %>%
-  dplyr::select(transcript_id, strand) %>% dplyr::distinct()
-  # mutate(transcript_id = gsub("\\..*","", transcript_id)) %>%
-  # dplyr::distinct()
+  dplyr::select(transcript_id, strand) %>% dplyr::distinct() %>% 
+  mutate(transcript_id = gsub("\\..*","", transcript_id)) %>%
+  dplyr::distinct()
 
 # attach the correct strand to the bed sites
 print("reparing strand")
@@ -63,81 +75,35 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
   mutate(score = ".") %>%
   dplyr::select(chr, start, end, transcript, score, strand, data)
 
+# separate the output 
+output <- output %>%
+  separate(data, sep = ";")
+
 # based on the CHEUI runmode, separate the data column into it's actual values
-if (args[4] == "pval"){
-  output <- output %>%
-    separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob", "p.raw"), sep = ";") %>%
-    type_convert(col_types = "fiiffficiddd")
-  output$p.adj <- p.adjust(output$p.raw, method = "fdr")
-} else if(args[4] == "II") {
-  output <- output %>%
-    separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob"), sep = ";") %>%
-    type_convert(col_types = "fiiffficidd")
-  # output$p.adj <- p.adjust(output$p.raw, method = "fdr")
-} else if(args[4] == "diff") {
-  # to be written
-  #output <- output %>%
-  #  separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob"), sep = ";") %>%
-  #  type_convert(col_types = "fiiffficidd")
-  #output$p.adj <- p.adjust(output$p.raw, method = "fdr")
-} else{
-  print("Invalid script run mode")
-  stop()
-}
-
-##################################################
-
-# attach the transcript lengths and biotype to output using the transcriptome coordinate
-merge_out <- inner_join(output, merged_metadata %>% dplyr::rename(transcript = transcript_id), by = "transcript")
-
-meta <- merge_out %>%
-  mutate(cds_start = utr5_len,
-         cds_end = utr5_len + cds_len,
-         tx_end = cds_end + utr3_len) %>%
-  mutate(rel_pos = ifelse(tx_coord < cds_start, # if the site is in the 5' utr
-         ((tx_coord)/(cds_start)), # the relative position is simply the position of the site in the UTR
-          ifelse(tx_coord < cds_end, # else, if the site is in the CDS
-          (1 + (tx_coord - utr5_len)/(cds_len)), # the relative position is betwee 1 and 2 and represents the fraction of the cds the site is in
-          (2 + (tx_coord - utr5_len - cds_len) / utr3_len))),  # no final condition, the site must be in the 3' utr, similar as before but the rel_pos is between 2 and 3
-         abs_cds_start = tx_coord - cds_start, # absolute pos relative to CDS start
-         abs_cds_end = tx_coord - cds_end) # absolute pos relative to CDS end
-
-##################################################
-
-# calculate distance from splice sites
-
-# make a tibble of splice junction coordinates from the exon data frame
-tx_junctions <- exons_tib %>%
-  mutate(transcript_id = group_name) %>%
-  group_by(transcript_id) %>%
-  filter(row_number() < n()) %>% # drop the last row of each group, (including single exon transcripts) which cannot represent a bona fide splice junction
-  arrange(exon_rank, .by_group = TRUE) %>%
-  dplyr::select(transcript_id, width, exon_rank) %>%
-  mutate(junc_coord = cumsum(width)) %>%
-  dplyr::rename(transcript = transcript_id) %>%
-  dplyr::rename(tx_coord = junc_coord) %>%
-  dplyr::select(transcript, tx_coord)
-
-# for each tested site, calculate the closest upstream and downstream junctions (where present) in tible tx_junctions
-junc_dist <- left_join(meta %>% dplyr::select(transcript, tx_coord), tx_junctions %>% dplyr::select(transcript, tx_coord), by = "transcript", suffix = c("", ".y")) %>%
-  group_by(transcript) %>%
-  mutate(up_junc_dist = tx_coord - tx_coord.y, down_junc_dist = tx_coord.y - tx_coord) %>%
-  pivot_longer(., cols = c(up_junc_dist, down_junc_dist), names_to = "type", values_to = "dist") %>%
-  group_by(transcript, tx_coord, type) %>%
-  filter(dist > 0) %>%
-  dplyr::slice(which.min(dist)) %>%
-  ungroup() %>%
-  dplyr::select(-tx_coord.y) %>%
-  pivot_wider(names_from = type, values_from = dist)
-
-# attach this data to our previous output
-meta_dist <- left_join(meta, junc_dist %>% dplyr::select(transcript, tx_coord, up_junc_dist, down_junc_dist), by = c("transcript", "tx_coord"))
-
-##################################################
+#if (args[4] == "pval"){
+#  output <- output %>%
+#     separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob", "p.raw"), sep = ";") %>%
+#     type_convert(col_types = "fiiffficiddd")
+#   output$p.adj <- p.adjust(output$p.raw, method = "fdr")
+# } else if(args[4] == "II") {
+#   output <- output %>%
+#     separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob"), sep = ";") %>%
+#     type_convert(col_types = "fiiffficidd")
+#   # output$p.adj <- p.adjust(output$p.raw, method = "fdr")
+# } else if(args[4] == "diff") {
+#   # to be written
+#   #output <- output %>%
+#   #  separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob"), sep = ";") %>%
+#   #  type_convert(col_types = "fiiffficidd")
+#   #output$p.adj <- p.adjust(output$p.raw, method = "fdr")
+# } else{
+#   print("Invalid script run mode")
+#   stop()
+# }
 
 # write the output
 print("writing final output")
-write_tsv(meta_dist, args[3], col_names = T, append = FALSE)
+write_tsv(output, args[3], col_names = T, append = FALSE)
 
 # if writing out from interactive use
 # meta_dist %>% dplyr::rename("#chr" = chr) %>% write_tsv(meta_dist, args[3], col_names = T, append = FALSE)
