@@ -3,7 +3,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least one argument: if not, return an error
 if (length(args)!=4) {
-  stop("\nUsage: Rscript liftoverCustomTranscriptome.R /path/to/bar.gtf /path/to/foo.bed /path/to/output.bed cheui-model", call.=FALSE)
+  stop("\nUsage: Rscript lift.R /path/to/foo.bed /path/to/bar.gtf /path/to/output.bed ,call.=FALSE)
 }
 
 library(GenomicFeatures)
@@ -29,43 +29,7 @@ args <- c("/Users/AJlocal/localGadiData/2022-05-08_cheui-annotate-AR1-AR4/mouse_
 ################################################################################
 ################################################################################
 
-# start
-
-tstart <- print(paste("start time is", as.character(Sys.time())))
-
-##################################################
-
-# process the annotation and make a reference table with transcript structure information
-
-# read in reference transcripts
-gtf <- makeTxDbFromGFF(file=args[1], format = "gtf")
-
-# make an exon database from the reference transcripts
-exons <- exonsBy(gtf, "tx", use.names=TRUE)
-
-# convert the transcripts to a tibble
-exons_tib <- as_tibble(as(exons, "data.frame"))
-
-# fetch the length of each transcript segment from the gtf
-txlen <- transcriptLengths(gtf, with.cds_len=TRUE, with.utr5_len=TRUE, with.utr3_len=TRUE) %>%
-  as_tibble() %>%
-  mutate(diff = tx_len - cds_len - utr5_len - utr3_len) %>%
-  dplyr::rename(transcript_id = tx_name) %>%
-  dplyr::select(-tx_id, -nexon, -gene_id, -diff)
-
-# the last command doesn't store biotype, so we read in the gtf again using another package
-tx_biotype <- rtracklayer::import(args[1]) %>%
-  as_tibble() %>%
-  dplyr::select(transcript_id, transcript_biotype, gene_name, gene_id) %>%
-  na.omit() %>%
-  dplyr::distinct()
-
-# merge the biotypes with the transcript segment lengths
-merged_metadata <- inner_join(tx_biotype, txlen, by = "transcript_id")
-
-##################################################
-
-# lift-over the bed-like CHEUI output
+# lift-over the bed-like tsv of transcriptomic sites to their cognate genomic sites
 
 # import bed file of transcriptome alignments
 mappedLocus <- read_tsv(file = args[2], col_names = F) %>%

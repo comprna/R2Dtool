@@ -86,7 +86,7 @@ fi
 # convert the CHEUI output to a bedlike format
 if [ ${mode} == "II" ]; then
   echo "doing mode II"
-  cat $3 | tail -n +2 | tr "_" "\t" | awk '{ print $1"\t"$2+3"\t"$2+4"\t"$2+3";"$3";"$4";"$5";"$6"\t.\t+"}' > ${outFile}.tempbed
+
 elif [ ${mode} == "pval" ]; then
   echo "doing mode pval"
   cat $3 | tail -n +2 | tr "_" "\t" | awk '{ print $1"\t"$2+3"\t"$2+4"\t"$2+3";"$3";"$4";"$5";"$6";"$7"\t.\t+"}' > ${outFile}.tempbed
