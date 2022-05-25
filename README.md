@@ -20,8 +20,8 @@ rtracklayer==1.56.0
 
 ### Annotate transcriptomic sites with metatranscript coordinates and transcript information
 
-Input file format: bed-like file of transcriptomic sites (col 1 = transcript)
-Output file format: Input, with n additional columns corresponding to ...
+Input file format: bed-like file of transcriptomic sites (col 1 = transcript).   
+Output file format: Input, with n additional columns corresponding to ...    
 
 ```
 bash txannotate.sh [bed-like transcriptomic sites] [output file]
@@ -29,8 +29,8 @@ bash txannotate.sh [bed-like transcriptomic sites] [output file]
 
 ### Liftover transcriptomic sites to genomic coordinates
 
-Input file format: bed-like file of transcriptomic sites (col 1 = transcript)
-Output file format: bed-like file of identical sites in genomic coordinates (col 1 = chromosome/scaffold)
+Input file format: bed-like file of transcriptomic sites (col 1 = transcript)     
+Output file format: bed-like file of identical sites in genomic coordinates (col 1 = chromosome/scaffold)      
 
 ```
 bash txliftover.sh [bed-like transcriptomic sites] [annotation] [output file]
