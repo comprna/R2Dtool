@@ -18,6 +18,12 @@ genomicFeatures==1.48.0
 rtracklayer==1.56.0
 ```
 
+Test installation: 
+```
+cd txannotate
+bash txliftover.sh ./test/test_mouse_GRCm39_cheui-model-ii.txt ./test/test_mouse_GRCm39_cheui-model-ii.txt ./test/liftover_output.txt
+```
+
 ### Annotate transcriptomic sites with metatranscript coordinates and transcript information
 
 Input file format: bed-like file of transcriptomic sites (col 1 = transcript).   
