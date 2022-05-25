@@ -9,14 +9,16 @@ genomicFeatures==1.48.0
 rtracklayer==1.56.0
 ```
 
-### Annotate bed-like transcriptomic sites with metatranscript coordinates  transcript information
+### Annotate transcriptomic sites with metatranscript coordinates and transcript information
 
-tbd
+Input file format: bed-like file of transcriptomic sites (col 1 = transcript)
+Output file format: Input, with n additional columns corresponding to ...
 
 
-### Liftover bed-like transcriptomic sites from transcriptomic coordinates to genomic coordinates
+### Liftover transcriptomic sites to genomic coordinates
 
-tbd
+Input file format: bed-like file of transcriptomic sites (col 1 = transcript)
+Output file format: bed-like file of identical sites in genomic coordinates (col 1 = chromosome/scaffold)
 
 ### Utilities: Convert CHEUI model II output to a bed-like input
 ```
