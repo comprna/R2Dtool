@@ -21,6 +21,9 @@ git clone git@github.com:comprna/txannotate.git
 Test: 
 ```
 cd txannotate
+
+# convert CHEUI model II output to BED
+
 bash txliftover.sh ./test/test_mouse_GRCm39_cheui-model-ii.txt \
 ./test/subset_GRCm39.104_annotation.gtf \
 ./test/test_mouse_GRCm39_cheui-model-ii.txt \
@@ -32,6 +35,7 @@ bash txliftover.sh ./test/test_mouse_GRCm39_cheui-model-ii.txt \
 Input file format: bed-like file of transcriptomic sites (col 1 = transcript).   
 Output file format: Input, with n additional columns corresponding to ...    
 
+Note: txannotate.sh still needs to be adapted from cheui-liftover.sh
 ```
 bash txannotate.sh [bed-like transcriptomic sites] [output file]
 ```
