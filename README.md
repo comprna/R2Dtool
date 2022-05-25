@@ -1,7 +1,16 @@
 # txannotate
 Convert bed-like sites from transcriptomic to genomic coordinates using a genome-appropriate annotation
 
-### Dependencies  
+### Installation and dependencies  
+
+To install txannotate, clone the entire git repository, and make R and the listed R packages available in your environment.
+
+Installation:
+```
+git clone git@github.com:comprna/txannotate.git
+```
+
+Dependencies: 
 ```
 r==4.2.0
 tidyverse==1.3.1
@@ -35,4 +44,4 @@ bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 ### General notes
 - Transcriptome to genome liftover relies only on transcript_id, site coordinates, and strand (columns 1:3,6)
 - Other columns aren't considered during annotation or liftover, and can be used to store additional information of interest
-- A header containing column names is expected for annotation and liftover 
+- A header containing column names is expected for annotation and liftover
