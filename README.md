@@ -3,14 +3,14 @@ Convert bed-like sites from transcriptomic to genomic coordinates using a genome
 
 ### Installation and dependencies  
 
-To install txannotate, clone the entire git repository, and make R and the listed R packages available in your environment.
+txannotate scripts require no installation beyond the availability of R and the listed packages:
 
 Installation:
 ```
 git clone git@github.com:comprna/txannotate.git
 ```
 
-Dependencies: 
+Dependencies:
 ```
 r==4.2.0
 tidyverse==1.3.1

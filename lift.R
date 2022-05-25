@@ -2,28 +2,13 @@
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there is at least one argument: if not, return an error
-if (length(args)!=4) {
-  stop("\nUsage: Rscript lift.R /path/to/foo.bed /path/to/bar.gtf /path/to/output.bed ,call.=FALSE)
+if (length(args)!=3) {
+  stop("\nUsage: Rscript lift.R /path/to/foo.bed /path/to/bar.gtf /path/to/output.bed", call.=FALSE)
 }
 
 library(GenomicFeatures)
 library(rtracklayer)
 library(tidyverse)
-
-# interactive args for testing (B iMac)
-# args <- c("/Users/asethi/localGadiData/2022-01-31_make-annotate-2/annotate_out.bed.temp.gtf", "/Users/asethi/localGadiData/2022-01-31_make-annotate-2/annotate_out.bed.tempbed", "/Users/asethi/localGadiData/2022-01-31_make-annotate-2/annotate_out.bed", "pval")
-
-# interactive args for testing (JCSMR; Rat)
-# args <- c("/Users/AJlocal/localGadiData/2022-05-05_test-annotate-rat/2022-05-05_annotated-AR3-100ksubsample.txt.temp.gtf", "/Users/AJlocal/localGadiData/2022-05-05_test-annotate-rat/2022-05-05_annotated-AR3-100ksubsample.txt.tempbed", "/Users/AJlocal/localGadiData/2022-05-05_test-annotate-rat/2022-05-05_annotated-AR3-100ksubsample.txt", "II")
-
-# interactive args for testing (JCSMR; Mouse AR1 complete)
-#
-args <- c("/Users/AJlocal/localGadiData/2022-05-08_cheui-annotate-AR1-AR4/mouse_AR1_annotated.txt.temp.gtf",
-          "/Users/AJlocal/localGadiData/2022-05-08_cheui-annotate-AR1-AR4/mouse_AR1_annotated.txt.tempbed",
-          "/Users/AJlocal/localGadiData/2022-05-08_cheui-annotate-AR1-AR4/mouse_AR1_annotated.txt", "II")
-
-# interactive args for testing (JCSMR; Rat AR4 complete)
-# args <- c("/Users/AJlocal/localGadiData/2022-05-08_cheui-annotate-AR1-AR4/rat_AR4_annotated.txt.temp.gtf", "/Users/AJlocal/localGadiData/2022-05-08_cheui-annotate-AR1-AR4/rat_AR4_annotated.txt.tempbed", "/Users/AJlocal/localGadiData/2022-05-08_cheui-annotate-AR1-AR4/rat_AR4_annotated.txt", "II")
 
 ################################################################################
 ################################################################################
