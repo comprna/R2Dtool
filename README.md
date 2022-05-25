@@ -33,7 +33,7 @@ Input file format: bed-like file of transcriptomic sites (col 1 = transcript)
 Output file format: bed-like file of identical sites in genomic coordinates (col 1 = chromosome/scaffold)
 
 ```
-bash txliftover.sh [bed-like transcriptomic sites] [transcriptome-specific GTF annotation] [output file]
+bash txliftover.sh [bed-like transcriptomic sites] [annotation] [output file]
 ```
 
 ### Utilities: Convert CHEUI model II output to a bed-like input
@@ -43,5 +43,6 @@ bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 
 ### General notes
 - Transcriptome to genome liftover relies only on transcript_id, site coordinates, and strand (columns 1:3,6)
+- The annotation used must be in GTF format and correspond correctly to the transcriptome used
 - Other columns aren't considered during annotation or liftover, and can be used to store additional information of interest
 - A header containing column names is expected for annotation and liftover
