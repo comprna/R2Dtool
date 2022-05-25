@@ -5,11 +5,6 @@ Convert bed-like sites from transcriptomic to genomic coordinates using a genome
 
 txannotate scripts require no installation beyond the availability of R and the listed packages:
 
-Installation:
-```
-git clone git@github.com:comprna/txannotate.git
-```
-
 Dependencies:
 ```
 r==4.2.0
@@ -18,7 +13,12 @@ genomicFeatures==1.48.0
 rtracklayer==1.56.0
 ```
 
-Test installation: 
+Installation:
+```
+git clone git@github.com:comprna/txannotate.git
+```
+
+Test: 
 ```
 cd txannotate
 bash txliftover.sh ./test/test_mouse_GRCm39_cheui-model-ii.txt \
