@@ -18,7 +18,7 @@ Installation:
 git clone git@github.com:comprna/txannotate.git
 ```
 
-Test: 
+Testing the installation: 
 ```
 cd txannotate
 
