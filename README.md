@@ -1,5 +1,5 @@
 # txannotate
-Convert bed-like sites from transcriptomic to genomic coordinates using a genome-appropriate annotation
+Annotate transcriptomic sites with metatranscript coordinates and fetch genomic coordinates using a genome annotation
 
 ### Installation and dependencies  
 
