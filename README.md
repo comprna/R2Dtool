@@ -1,5 +1,5 @@
 # txannotate
-Annotate transcriptomic sites with metatranscript coordinates and fetch genomic coordinates using a genome annotation
+Annotate transcriptomic sites with metatranscript coordinates and convert to genomic coordinates using a genome annotation
 
 ### Installation and dependencies  
 
