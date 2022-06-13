@@ -100,6 +100,12 @@ output <- output %>% separate(data, sep = ">_>", into = targetNames)
 
 # fix the genome coordinate error 
 
+output <- output %>% 
+  mutate(start = if_else(strand == "-", start - 2, as.double(start))) %>% 
+  mutate(end = if_else(strand == "-", end - 2, as.double(end)))      
+    
+##################################################
+
 # write the output
 print("writing final output")
 write_tsv(output, args[3], col_names = T, append = FALSE)
