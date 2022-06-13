@@ -23,7 +23,7 @@ mappedLocus <- read_tsv(file = args[1], col_names = T) %>%
   dplyr::rename(transcript_id = 1) %>% 
   mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
   dplyr::rename(tx_coord = 2) %>% 
-  dplyr::mutate(tx_coord_start = 2, tx_coord_end = 3)
+  dplyr::mutate(tx_coord_start = cur_data()[[2]], tx_coord_end = cur_data()[[3]])
 
 # collect the column names of columns 7+ 
 targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
