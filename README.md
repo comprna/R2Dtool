@@ -18,16 +18,20 @@ Installation:
 git clone git@github.com:comprna/txannotate.git
 ```
 
-Testing the installation: 
+Testing the installation:
 ```
 cd txannotate
 
 # convert CHEUI model II output to BED
 
-bash txliftover.sh ./test/test_mouse_GRCm39_cheui-model-ii.txt \
-./test/subset_GRCm39.104_annotation.gtf \
-./test/test_mouse_GRCm39_cheui-model-ii.txt \
-./test/liftover_output.txt
+bash cheui_to_bed.sh ./test/CHEUI_modelII_subset.txt ./test/out_CHEUI_modelII.bed
+
+# annotate bed-like transcriptomic sites
+
+Rscript annotate.R ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.gtf ./test/out_CHEUI_modelII_annotated.bed
+
+# liftover annotated transcriptomic sites
+Rscript lift.R ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed
 ```
 
 ### Annotate transcriptomic sites with metatranscript coordinates and transcript information
@@ -50,6 +54,7 @@ bash txliftover.sh [bed-like transcriptomic sites] [annotation] [output file]
 ```
 
 ### Utilities: Convert CHEUI model II output to a bed-like input
+- This script transposes CHEUI coordinates by +3 (bed interval start) and +4 (bed interval end) to represent a single nuecleotide
 ```
 bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 ```

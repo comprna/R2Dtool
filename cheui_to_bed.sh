@@ -15,10 +15,15 @@ export bedlike_cheui_model_ii_output="${2}"
 printf "[cheui-to-bed] $(date) ..... converting ${cheui_model_ii_output##*/} to bed-like file\n"
 
 # write header
-printf "transcript\tstart\tend\tname\tscore\tstrand\n" > "${bedlike_cheui_model_ii_output}"
+printf "transcript\tstart\tend\tname\tscore\tstrand\tmotif\tcoverage\tstoichiometry\tprobability\n" > "${bedlike_cheui_model_ii_output}"
 
 # rearrange input columns to make 6-col bed-like output
-cat ${cheui_model_ii_output} | tail -n +2 | tr "_" "\t" | awk '{ print $1"\t"$2+3"\t"$2+4"\t"$2+3";"$3";"$4";"$5";"$6"\t.\t+"}' >> "${bedlike_cheui_model_ii_output}" || printf "[cheui-to-bed] $(date) ..... [error] conversion for ${cheui_model_ii_output} failed!\n"
+
+# commented code concatenates data into name columnn
+# cat ${cheui_model_ii_output} | tail -n +2 | tr "_" "\t" | awk '{ print $1"\t"$2+3"\t"$2+4"\t"$2+3";"$3";"$4";"$5";"$6"\t.\t+"}' >> "${bedlike_cheui_model_ii_output}" || printf "[cheui-to-bed] $(date) ..... [error] conversion for ${cheui_model_ii_output} failed!\n"
+
+# new code adds additional data to columns 7+
+cat ${cheui_model_ii_output} | tail -n +2 | tr "_" "\t" | awk '{ print $1"\t"$2+3"\t"$2+4"\t.\t.\t+\t"$3"\t"$4"\t"$5"\t"$6}' >> "${bedlike_cheui_model_ii_output}" || printf "[cheui-to-bed] $(date) ..... [error] conversion for ${cheui_model_ii_output} failed!\n"
 
 # check word count
 count=$(cat "${bedlike_cheui_model_ii_output}" | wc -l | xargs)

@@ -11,13 +11,32 @@ library(rtracklayer)
 library(tidyverse)
 
 # test data 
-# args <- c("~/Documents/txannotate/test/liftover_output.txt.tempbed", "~/Documents/txannotate/test/liftover_output.txt.temp.gtf", "~/Documents/txannotate/test/liftover_output.txt")
+# args <- c("~/Documents/txannotate/test/out_CHEUI_modelII_annotated.bed", "~/Documents/txannotate/test/GRCm39_subset.gtf", "~/Documents/txannotate/test/out_CMII_annotated_lifted.bed")
 
 ################################################################################
 ################################################################################
 ################################################################################
 
-# lift-over the bed-like tsv of transcriptomic sites to their cognate genomic sites
+# import bed file of transcriptome alignments
+
+mappedLocus <- read_tsv(file = args[1], col_names = T) %>% 
+  dplyr::rename(transcript_id = 1) %>% 
+  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
+  dplyr::rename(tx_coord = 2) %>% 
+  dplyr::mutate(tx_coord_start = 2, tx_coord_end = 3)
+
+# collect the column names of columns 7+ 
+targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
+
+# merge columns c(4,7+)
+mappedLocus <- unite(mappedLocus, metaname, c(4,7:length(colnames(mappedLocus))), sep = ">_>", remove = TRUE, na.rm = FALSE)
+
+# deselect strand 
+mappedLocus <- mappedLocus %>% select(-6)
+
+##################################################
+
+# fetch transcript structures from transcriptome annotation 
 
 # read in reference transcripts
 gtf <- makeTxDbFromGFF(file=args[2], format = "gtf")
@@ -28,13 +47,6 @@ exons <- exonsBy(gtf, "tx", use.names=TRUE)
 # prepare the exons 
 exons_tib <- as_tibble(as(exons, "data.frame"))
 
-# import bed file of transcriptome alignments
-mappedLocus <- read_tsv(file = args[1], col_names = F) %>%
-  dplyr::rename(transcript = 1, start = 2, end = 3, name = 4, score = 5, strand = 6) %>%
-  dplyr::select(-strand) %>%
-  separate(transcript, into=c("transcript_id", "transcript_version"), sep = "([.])", extra = "merge") %>%
-  dplyr::select(-transcript_version)
-
 # make lookup table for strand
 print("preparing strand lookup table")
 strand_lookup <- exons_tib %>%
@@ -43,6 +55,8 @@ strand_lookup <- exons_tib %>%
   mutate(transcript_id = gsub("\\..*","", transcript_id)) %>%
   dplyr::distinct()
 
+##################################################
+
 # attach the correct strand to the bed sites
 print("reparing strand")
 mappedLocus_fixedStrand <- inner_join(mappedLocus, strand_lookup, by = "transcript_id")
@@ -50,6 +64,8 @@ mappedLocus_fixedStrand <- inner_join(mappedLocus, strand_lookup, by = "transcri
 # write out the strand-repaired file as a temporary file
 print("writing strand bedfile")
 write_tsv(mappedLocus_fixedStrand, args[3], col_names = F)
+
+##################################################
 
 # read in the bed sites with corrected strand
 print("importing strand bedfile")
@@ -73,43 +89,19 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
   unique() %>%
   dplyr::rename(chr = seqnames, data = X.name, transcript = X.seqnames) %>%
   mutate(score = ".") %>%
-  dplyr::select(chr, start, end, transcript, score, strand, data)
+  dplyr::select(chr, start, end, transcript, score, strand, data) %>% 
+  mutate(end = end + 1) %>% 
+  rename("#chr" = chr)
 
 # separate the output 
-output <- output %>%
-  separate(data, sep = ";")
+output <- output %>% separate(data, sep = ">_>", into = targetNames) 
 
-# based on the CHEUI runmode, separate the data column into it's actual values
-#if (args[4] == "pval"){
-#  output <- output %>%
-#     separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob", "p.raw"), sep = ";") %>%
-#     type_convert(col_types = "fiiffficiddd")
-#   output$p.adj <- p.adjust(output$p.raw, method = "fdr")
-# } else if(args[4] == "II") {
-#   output <- output %>%
-#     separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob"), sep = ";") %>%
-#     type_convert(col_types = "fiiffficidd")
-#   # output$p.adj <- p.adjust(output$p.raw, method = "fdr")
-# } else if(args[4] == "diff") {
-#   # to be written
-#   #output <- output %>%
-#   #  separate(data, into=c("tx_coord", "motif", "coverage", "stoich", "prob"), sep = ";") %>%
-#   #  type_convert(col_types = "fiiffficidd")
-#   #output$p.adj <- p.adjust(output$p.raw, method = "fdr")
-# } else{
-#   print("Invalid script run mode")
-#   stop()
-# }
+##################################################
+
+# fix the genome coordinate error 
 
 # write the output
 print("writing final output")
 write_tsv(output, args[3], col_names = T, append = FALSE)
 
-# if writing out from interactive use
-# meta_dist %>% dplyr::rename("#chr" = chr) %>% write_tsv(meta_dist, args[3], col_names = T, append = FALSE)
 
-tend <- print(paste("end time is", as.character(Sys.time())))
-
-tstart
-tend
-# quit()
