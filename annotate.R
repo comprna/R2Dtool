@@ -44,9 +44,13 @@ txlen <- transcriptLengths(gtf, with.cds_len=TRUE, with.utr5_len=TRUE, with.utr3
   dplyr::rename(transcript_id = tx_name) %>%
   dplyr::select(-tx_id, -nexon, -gene_id, -diff)
 
+# rename the gene_type field in case a gencode GTF is used (transcript_biotype) only works for Ensembl GTFs?
+lookup <- c(transcript_biotype = "gene_type")
+
 # the last command doesn't store biotype, so we read in the gtf again using another package
 tx_biotype <- rtracklayer::import(args[2]) %>%
   as_tibble() %>%
+  dplyr::rename(any_of(lookup)) %>%
   dplyr::select(transcript_id, transcript_biotype, gene_name, gene_id) %>%
   na.omit() %>%
   dplyr::distinct()
