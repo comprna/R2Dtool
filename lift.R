@@ -10,8 +10,9 @@ library(GenomicFeatures)
 library(rtracklayer)
 library(tidyverse)
 
-# test data 
-# args <- c("~/Documents/txannotate/test/out_CHEUI_modelII_annotated.bed", "~/Documents/txannotate/test/GRCm39_subset.gtf", "~/Documents/txannotate/test/out_CMII_annotated_lifted.bed")
+
+# test data for GENCODE 
+# args <- c("", "", "")
 
 ################################################################################
 ################################################################################
@@ -19,9 +20,9 @@ library(tidyverse)
 
 # import bed file of transcriptome alignments
 
-mappedLocus <- read_tsv(file = args[1], col_names = T) %>% 
+mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>% 
   dplyr::rename(transcript_id = 1) %>% 
-  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
+  # mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
   dplyr::rename(tx_coord = 2) %>% 
   dplyr::mutate(tx_coord_start = cur_data()[[2]], tx_coord_end = cur_data()[[3]])
 

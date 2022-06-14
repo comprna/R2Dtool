@@ -10,8 +10,11 @@ library(GenomicFeatures)
 library(rtracklayer)
 library(tidyverse)
 
-# test data 
+# test data for Ensembl 
 # args <- c("~/Documents/txannotate/test/out_CHEUI_modelII.bed", "~/Documents/txannotate/test/GRCm39_subset.gtf", "~/Documents/txannotate/test/out_CHEUI_modelII_annotated.bed")
+
+# test data for GENCODE 
+# args <- c("~/localGadiData/2022-06-14_liftover-cell-line-txannotate/output/HeLa_KO_m5C_CHEUI_site_level_annotated.bed", "~/localGadiData/2022-06-14_liftover-cell-line-txannotate/gencode.v38.annotation.gtf", "~/localGadiData/2022-06-14_liftover-cell-line-txannotate/output/HeLa_KO_m5C_CHEUI_site_level_annotated_output.bed")
 
 ################################################################################
 ################################################################################
@@ -19,9 +22,9 @@ library(tidyverse)
 
 # read in epitranscriptomic sites 
 
-mappedLocus <- read_tsv(file = args[1], col_names = T) %>% 
+mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>% 
   dplyr::rename(transcript_id = 1) %>% 
-  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
+  # mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
   dplyr::rename(tx_coord = 2)
 
 ##################################################

@@ -66,3 +66,4 @@ bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 - Other columns aren't considered during annotation or liftover, and can be used to store additional information of interest
 - A header containing column names is expected for annotation and liftover
 - Issues with transcript_id and transcript_version? Try commenting out lines 32:33 and 40:41 in lift.R
+- Using a GENCODE annotation? Try commenting out line 25 in lift.R and line 27 in annotate.R 
