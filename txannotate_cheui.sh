@@ -31,7 +31,7 @@ Rscript ${SCRIPTPATH}/annotate.R "${lift_annotate_output}_temp.bed"  "${annotati
 Rscript ${SCRIPTPATH}/lift.R "${lift_annotate_output}_temp_annotated.bed" "${annotation}" "${lift_annotate_output}" || echo "failed to liftover ${cheui_model_ii_output}"
 
 # finish by deleting all temporary files made by the script
-rm ${lift_annotate_output}_temp*
+# rm ${lift_annotate_output}_temp*
 
 # tell user the script is done
 printf "[cheui-to-bed] $(date) ..... converting ${cheui_model_ii_output##*/} to bed-like file\n"

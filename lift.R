@@ -6,13 +6,13 @@ if (length(args)!=3) {
   stop("\nUsage: Rscript lift.R /path/to/foo.bed /path/to/bar.gtf /path/to/output.bed", call.=FALSE)
 }
 
-library(GenomicFeatures)
-library(rtracklayer)
-library(tidyverse)
+suppressMessages(suppressWarnings(library(GenomicFeatures, warn.conflicts = F, quietly = T)))
+suppressMessages(suppressWarnings(library(rtracklayer, warn.conflicts = F, quietly = T)))
+suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly = T)))
 
 
 # test data for GENCODE 
-# args <- c("", "", "")
+# args <- c("/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_output.bed_temp_annotated.bed", "/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_annotation.gtf", "/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_output.bed")
 
 ################################################################################
 ################################################################################
@@ -24,7 +24,8 @@ mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999)
   dplyr::rename(transcript_id = 1) %>% 
   # mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
   dplyr::rename(tx_coord = 2) %>% 
-  dplyr::mutate(tx_coord_start = cur_data()[[2]], tx_coord_end = cur_data()[[3]])
+  dplyr::rename(tx_coord_close = 3) %>% 
+  dplyr::mutate(tx_coord_start = tx_coord, tx_coord_end = tx_coord_close)
 
 # collect the column names of columns 7+ 
 targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
@@ -53,7 +54,7 @@ print("preparing strand lookup table")
 strand_lookup <- exons_tib %>%
   dplyr::rename(transcript_id = group_name) %>%
   dplyr::select(transcript_id, strand) %>% dplyr::distinct() %>% 
-  mutate(transcript_id = gsub("\\..*","", transcript_id)) %>%
+  # mutate(transcript_id = gsub("\\..*","", transcript_id)) %>%
   dplyr::distinct()
 
 ##################################################
