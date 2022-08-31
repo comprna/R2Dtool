@@ -1,5 +1,5 @@
 # txannotate
-Annotate transcriptomic sites with metatranscript coordinates and convert to genomic coordinates using a genome annotation
+A utility for working with transcriptomic coordinates. Anotate transcriptomic sites with metatranscript coordinates and convert to genomic coordinates using a genome annotation
 
 ### Installation and dependencies  
 
@@ -26,7 +26,7 @@ cd txannotate
 
 bash cheui_to_bed.sh ./test/CHEUI_modelII_subset.txt ./test/out_CHEUI_modelII.bed
 
-# annotate bed-like transcriptomic sites
+# annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and biotype 
 
 Rscript annotate.R ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.gtf ./test/out_CHEUI_modelII_annotated.bed
 
