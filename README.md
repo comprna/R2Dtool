@@ -5,7 +5,8 @@ Anotate transcriptomic sites with metatranscript coordinates, calculate distance
 
 
    - [Installation and dependencies](#installation-and-dependencies)
-   - [Annotate transcriptomic sites with metatranscript coordinates and transcript information](#annotate-transcriptomic-sites-with-metatranscript-coordinates-and-transcript-information)
+   - [Input and output data structure](#Input-and-output-data-structure)
+   - [Annotating transcriptomic sites](#Annotating-transcriptomic-sites)
    - [Liftover transcriptomic sites to genomic coordinates](#liftover-transcriptomic-sites-to-genomic-coordinates)
    - [Utilities: Convert CHEUI model II output to a bed-like input](#utilities--convert-cheui-model-ii-output-to-a-bed-like-input)
    - [General notes](#general-notes)
@@ -45,7 +46,12 @@ Rscript annotate.R ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.gtf ./test/
 Rscript lift.R ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed
 ```
 
-### Annotate transcriptomic sites with metatranscript coordinates and transcript information
+### Input and output data structure
+
+txannotate is designed to work with bed-like files with column names in row 1. Namely, column 1 should represent transcript, column 2 and 3 should represent the coordinate of interest in zero-based, half open coordinates (e.g. the third nucleotide of a transcript has coordinates (2,3). Column 5, representing strand, is assumed as being (+) since the coordinate should be on the + strand. Columns 4, and 6 onwards are not modified, and can be used to hold additional information, e.g. predictions of RNA modification stoichiometry, probability, etc. Because the output files will have a header, this may need to be removed prior to opening the file on some genome browsers. 
+
+
+### Annotating transcriptomic sites 
 
 Input file format: bed-like file of transcriptomic sites (col 1 = transcript).   
 Output file format: Input, with n additional columns corresponding to ...    
