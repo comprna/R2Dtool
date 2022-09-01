@@ -12,7 +12,6 @@ Isoform-centric transcriptomic sites  ────┼─────────
                                           │
                                           └──────────────────►   Annotated genome-centric transcriptomic sites
 ```
-------------------------------------------
 
    - [Installation and dependencies](#installation-and-dependencies)
    - [Input and output data structure](#Input-and-output-data-structure)
@@ -23,7 +22,7 @@ Isoform-centric transcriptomic sites  ────┼─────────
 
 ------------------------------------------
 
-### Installation and dependencies  
+### Dependencies 
 
 txannotate scripts require no installation beyond the availability of R and the listed packages:
 
@@ -35,24 +34,22 @@ genomicFeatures==1.48.0
 rtracklayer==1.56.0
 ```
 
-Installation:
+Downloading and testing txannotate:
 ```
+# get txannotate 
 git clone git@github.com:comprna/txannotate.git
-```
 
-Testing the installation:
-```
 cd txannotate
 
 # convert CHEUI model II output to BED
 
 bash ./scripts/cheui_to_bed.sh ./test/CHEUI_modelII_subset.txt ./test/out_CHEUI_modelII.bed
 
-# annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and biotype 
+# annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype 
 
 Rscript ./scripts/annotate.R ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.gtf ./test/out_CHEUI_modelII_annotated.bed
 
-# liftover annotated transcriptomic sites
+# liftover annotated transcriptomic sites to genomic coordinates 
 
 Rscript ./scripts/lift.R ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed
 ```
