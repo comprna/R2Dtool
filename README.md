@@ -11,7 +11,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
                                           └───── lift + annotate ───►   Annotated genome-centric transcriptomic sites
 ```
 
-   - [Dependencies](#dependencies)
+   - [Dependencies and installation](#dependencies-and-installation)
    - [Usage](#usage)
    - [Input and output data structure](#Input-and-output-data-structure)
    - [Utilities: Convert CHEUI model II output to a BED-like input](#utilities--convert-cheui-model-ii-output-to-a-bed-like-input)
@@ -19,7 +19,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
 
 ------------------------------------------
 
-## Dependencies 
+## Dependencies and installation
 
 txannotate scripts require no installation beyond the availability of R and the listed packages:
 
