@@ -1,7 +1,7 @@
 # txannotate
 
 A utility for long-read isoform-centric epitranscriptomics that (i) annotates transcriptomic position with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and (ii) transposes transcriptomic coordinates to genomic coordinates to enable comparison of epitranscriptomic sites between transcript isoforms, and visualization of epitranscriptomic sites on a genome browser.
-
+```
                                           ┌──────────────────►   Genome-centric transcriptomic sites
                                           │
                                           │
@@ -11,7 +11,7 @@ Isoform-centric transcriptomic sites  ────┼─────────
                                           │
                                           │
                                           └──────────────────►   Annotated genome-centric transcriptomic sites
-
+```
 ------------------------------------------
 
    - [Installation and dependencies](#installation-and-dependencies)
