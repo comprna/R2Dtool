@@ -17,7 +17,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
 
 ------------------------------------------
 
-### Dependencies 
+## Dependencies 
 
 txannotate scripts require no installation beyond the availability of R and the listed packages:
 
@@ -31,9 +31,9 @@ rtracklayer==1.56.0
 
 Downloading and testing txannotate:
 ```
-# get txannotate 
-git clone git@github.com:comprna/txannotate.git
+# download txannotate from github
 
+git clone git@github.com:comprna/txannotate.git
 cd txannotate
 
 # convert CHEUI model II output to BED
@@ -49,7 +49,7 @@ Rscript ./scripts/annotate.R ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.g
 Rscript ./scripts/lift.R ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed
 ```
 
-# Usage 
+## Usage 
 
 ### Annotating transcriptomic sites with metatranscript coordinates, splice junction distances, and gene structure information 
 
