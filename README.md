@@ -9,7 +9,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
                                           └───── lift + annotate ───►   Annotated genome-centric transcriptomic sites
 ```
 
-   - [Installation and dependencies](#installation-and-dependencies)
+   - [Dependencies](#dependencies)
    - [Usage](#usage)
    - [Input and output data structure](#Input-and-output-data-structure)
    - [Utilities: Convert CHEUI model II output to a bed-like input](#utilities--convert-cheui-model-ii-output-to-a-bed-like-input)
@@ -49,9 +49,9 @@ Rscript ./scripts/annotate.R ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.g
 Rscript ./scripts/lift.R ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed
 ```
 
-### Usage 
+# Usage 
 
-# Annotating transcriptomic sites 
+### Annotating transcriptomic sites with metatranscript coordinates, splice junction distances, and gene structure information 
 
 Input file format: bed-like file of transcriptomic sites (col 1 = transcript).   
 Output file format: Input, with n additional columns corresponding to ...    
@@ -60,7 +60,7 @@ Output file format: Input, with n additional columns corresponding to ...
 bash annotate.R [bed-like transcriptomic sites] [gtf annotation] [output file]
 ```
 
-#Liftover transcriptomic sites to genomic coordinates
+### Liftover transcriptomic sites to genomic coordinates
 
 Input file format: bed-like file of transcriptomic sites (col 1 = transcript)     
 Output file format: bed-like file of identical sites in genomic coordinates (col 1 = chromosome/scaffold)      
@@ -68,6 +68,8 @@ Output file format: bed-like file of identical sites in genomic coordinates (col
 ```
 bash txliftover.sh [bed-like transcriptomic sites] [annotation] [output file]
 ```
+
+Note: Liftover can be complete indpendantly of annotation.
 
 
 ### Input and output data structure
