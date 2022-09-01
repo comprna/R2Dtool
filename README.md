@@ -1,8 +1,18 @@
 # txannotate
 
-A utility for manipulating transcriptomic coordinates for epitranscriptomic applications. 
-Anotate transcriptomic sites with metatranscript coordinates, calculate distance of a transcriptomic site from the nearest upstream and downstream splice sites, and lift-over transcriptomic sites to to genomic coordinates to enable visualisation of epitranscriptomic sites on a genome browser.
+A utility for long-read isoform-centric epitranscriptomics that (i) annotates transcriptomic position with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and (ii) transposes transcriptomic coordinates to genomic coordinates to enable comparison of epitranscriptomic sites between transcript isoforms, and visualization of epitranscriptomic sites on a genome browser.
 
+                                          ┌──────────────────►   Genome-centric transcriptomic sites
+                                          │
+                                          │
+                                          │
+Isoform-centric transcriptomic sites  ────┼──────────────────►   Annotated isoform-centric transcriptomic sites
+                                          │
+                                          │
+                                          │
+                                          └──────────────────►   Annotated genome-centric transcriptomic sites
+
+------------------------------------------
 
    - [Installation and dependencies](#installation-and-dependencies)
    - [Input and output data structure](#Input-and-output-data-structure)
@@ -11,6 +21,7 @@ Anotate transcriptomic sites with metatranscript coordinates, calculate distance
    - [Utilities: Convert CHEUI model II output to a bed-like input](#utilities--convert-cheui-model-ii-output-to-a-bed-like-input)
    - [General notes](#general-notes)
 
+------------------------------------------
 
 ### Installation and dependencies  
 
