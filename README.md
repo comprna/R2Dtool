@@ -1,6 +1,8 @@
 # txannotate
 
-A utility for long-read isoform-centric epitranscriptomics that (i) annotates transcriptomic position with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and (ii) transposes transcriptomic coordinates to genomic coordinates to enable the comparison of epitranscriptomic sites between transcript isoforms, and also to enable visualization of epitranscriptomic sites on a genome browser.
+A utility for long-read isoform-centric epitranscriptomics that:
+  (i) Annotates transcriptomic position with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and 
+  (ii) transposes transcriptomic coordinates to genomic coordinates to enable the comparison of epitranscriptomic sites between transcript isoforms, and also to enable visualization of epitranscriptomic sites on a genome browser.
 ```
                                           ┌──────── liftover ───────►   Genome-centric transcriptomic sites
                                           │
@@ -12,7 +14,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
    - [Dependencies](#dependencies)
    - [Usage](#usage)
    - [Input and output data structure](#Input-and-output-data-structure)
-   - [Utilities: Convert CHEUI model II output to a bed-like input](#utilities--convert-cheui-model-ii-output-to-a-bed-like-input)
+   - [Utilities: Convert CHEUI model II output to a BED-like input](#utilities--convert-cheui-model-ii-output-to-a-bed-like-input)
    - [General notes](#general-notes)
 
 ------------------------------------------
@@ -30,6 +32,7 @@ rtracklayer==1.56.0
 ```
 
 Downloading and testing txannotate:
+
 ```
 # download txannotate from github
 
@@ -62,19 +65,19 @@ bash annotate.R [bed-like transcriptomic sites] [gtf annotation] [output file]
 
 ### Liftover transcriptomic sites to genomic coordinates
 
-Input file format: bed-like file of transcriptomic sites (col 1 = transcript)     
-Output file format: bed-like file of identical sites in genomic coordinates (col 1 = chromosome/scaffold)      
+Input file format: BED-like file of transcriptomic sites (col 1 = transcript)     
+Output file format: BED-like file of identical sites in genomic coordinates (col 1 = chromosome/scaffold)      
 
 ```
-bash txliftover.sh [bed-like transcriptomic sites] [annotation] [output file]
+bash txliftover.sh [BED-like transcriptomic sites] [GTF annotation] [BED-like output file]
 ```
 
 Note: Liftover can be complete indpendantly of annotation.
 
 
-### Input and output data structure
+## Input and output data structure
 
-txannotate is designed to work with bed-like files with a header of column names in row 1. Following UCSC's recommendations, input and output bed files should be tab-delimited plaintext: 
+txannotate is designed to work with tab-delimited, plain text BED-like files with a header of column names in row 1. Following UCSC's recommendations, input and output BED files should be tab-delimited plaintext: 
 
 - column 1 should represent transcript, 
 - column 2 and 3 should represent the coordinate of interest in zero-based, half open coordinates (e.g. the third nucleotide of a transcript is represented as (2,3),
@@ -88,8 +91,8 @@ Note:
 - Because the output files will have a header, this may need to be removed prior to opening the file on some genome browsers. 
 
 
-### Utilities: Convert CHEUI model II output to a bed-like input
-- This script transposes CHEUI coordinates by +3 (bed interval start) and +4 (bed interval end) to represent a single nuecleotide
+### Utilities: Convert CHEUI model II output to a BED-like input
+- This script transposes CHEUI coordinates by +3 (BED interval start) and +4 (BED interval end) to represent a single nuecleotide
 ```
 bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 ```
