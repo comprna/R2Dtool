@@ -1,4 +1,4 @@
-# txannotate
+# R2Dtool
 
 A utility for long-read isoform-centric epitranscriptomics that:
   (i) Annotates transcriptomic position with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and 
@@ -21,7 +21,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
 
 ## Dependencies and installation
 
-txannotate scripts require no installation beyond the availability of R and the listed packages:
+r2dtool scripts require no installation beyond the availability of R and the listed packages:
 
 Dependencies:
 ```
@@ -31,13 +31,13 @@ genomicFeatures==1.48.0
 rtracklayer==1.56.0
 ```
 
-Downloading and testing txannotate:
+Downloading and testing R2Dtool:
 
 ```
-# download txannotate from github
+# download R2Dtool from github
 
-git clone git@github.com:comprna/txannotate.git
-cd txannotate
+git clone git@github.com:comprna/R2Dtool.git
+cd R2Dtool
 
 # convert CHEUI model II output to BED
 
@@ -77,7 +77,7 @@ Note: Liftover can be complete indpendantly of annotation.
 
 ## Input and output data structure
 
-txannotate is designed to work with tab-delimited, plain text BED-like files with a header of column names in row 1. Following UCSC's recommendations, input and output BED files should be tab-delimited plaintext: 
+R2Dtool is designed to work with tab-delimited, plain text BED-like files with a header of column names in row 1. Following UCSC's recommendations, input and output BED files should be tab-delimited plaintext: 
 
 - column 1 should represent transcript, 
 - column 2 and 3 should represent the coordinate of interest in zero-based, half open coordinates (e.g. the third nucleotide of a transcript is represented as (2,3),
