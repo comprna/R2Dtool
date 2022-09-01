@@ -1,8 +1,9 @@
-# R2Dtool
+# R2DTool
 
 A utility for long-read isoform-centric epitranscriptomics that:
   - Annotates transcriptomic position with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and 
   - Transposes transcriptomic coordinates to genomic coordinates to enable the comparison of epitranscriptomic sites between overlapping transcript isoforms, and also to enable visualization of epitranscriptomic sites on a genome browser.
+
 ```
                                           ┌──────── liftover ───────►   Genome-centric transcriptomic sites
                                           │
@@ -21,7 +22,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
 
 ## Dependencies and installation
 
-r2dtool scripts require no installation beyond the availability of R and the listed packages:
+R2DTool scripts require no installation beyond the availability of R and the listed packages:
 
 Dependencies:
 ```
@@ -39,10 +40,6 @@ Downloading and testing R2Dtool:
 git clone git@github.com:comprna/R2Dtool.git
 cd R2Dtool
 
-# convert CHEUI model II output to BED
-
-bash ./scripts/cheui_to_bed.sh ./test/CHEUI_modelII_subset.txt ./test/out_CHEUI_modelII.bed
-
 # annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype 
 
 Rscript ./scripts/annotate.R ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.gtf ./test/out_CHEUI_modelII_annotated.bed
@@ -56,11 +53,11 @@ Rscript ./scripts/lift.R ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_su
 
 ### Annotating transcriptomic sites with metatranscript coordinates, splice junction distances, and gene structure information 
 
-Input file format: bed-like file of transcriptomic sites (col 1 = transcript).   
-Output file format: Input, with n additional columns corresponding to ...    
+Input file format: bed-like file of transcriptomic sites (see input file structure for more information)
+Output file format: Identical to input file, with n identical columns, representing ?what?
 
 ```
-bash annotate.R [bed-like transcriptomic sites] [gtf annotation] [output file]
+Rscript R2_annotate.R [bed-like transcriptomic sites] [gtf annotation] [output file]
 ```
 
 ### Liftover transcriptomic sites to genomic coordinates
@@ -73,11 +70,12 @@ bash txliftover.sh [BED-like transcriptomic sites] [GTF annotation] [BED-like ou
 ```
 
 Note: Liftover can be complete indpendantly of annotation.
+Note: columns (1-3,6) represent the genomic positions of
 
 
 ## Input and output data structure
 
-R2Dtool is designed to work with tab-delimited, plain text BED-like files with a header of column names in row 1. Following UCSC's recommendations, input and output BED files should be tab-delimited plaintext: 
+R2Dtool is designed to work with tab-delimited, plain text BED-like files with a header of column names in row 1. Following UCSC's recommendations, input and output BED files should be tab-delimited plain-text: 
 
 - column 1 should represent transcript, 
 - column 2 and 3 should represent the coordinate of interest in zero-based, half open coordinates (e.g. the third nucleotide of a transcript is represented as (2,3),
