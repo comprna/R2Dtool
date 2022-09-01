@@ -1,5 +1,7 @@
 # txannotate
-A utility for working with transcriptomic coordinates. Anotate transcriptomic sites with metatranscript coordinates and convert to genomic coordinates using a genome annotation
+
+A utility for manipulating transcriptomic coordinates for epitranscriptomic applications. 
+Anotate transcriptomic sites with metatranscript coordinates, calculate distance of a transcriptomic site from the nearest upstream and downstream splice sites, and lift-over transcriptomic sites to to genomic coordinates to enable visualisation of epitranscriptomic sites on a genome browser.
 
 ### Installation and dependencies  
 
