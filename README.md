@@ -53,12 +53,21 @@ Rscript ./scripts/R2_annotate.R ./test/out_CHEUI_modelII.bed ./test/GRCm39_subse
 Rscript ./scripts/R2_lift.R ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed
 ```
 
+Note: Test data was generated using [cheui](https://github.com/comprna/CHEUI) and converted to bed-like coordinates using [R2Dtool utilities](https://github.com/comprna/R2Dtool/blob/main/scripts/cheui_to_bed.sh).
+
 ## Usage 
 
-### Annotating transcriptomic sites with metatranscript coordinates, splice junction distances, and gene structure information 
+### Annotating transcriptomic sites (metatranscript coordinates, splice junction distances, gene structure)
 
-Input file format: bed-like file of transcriptomic sites (see input file structure for more information)
-Output file format: Identical to input file, with n identical columns, representing ?what?
+Annotation adds the following information to the epitranscriptomic sites as additional coluumns, relying on the gene structure GTF to generate these data.
+
+transcript_biotype | gene_name | gene_id | tx_len | cds_len | utr5_len | utr3_len | cds_start | cds_end | tx_end  | rel_pos | abs_cds_start | abs_cds_end | up_junc_dist | down_junc_dist
+
+- tx_len represents the transcript length, and cds-, utr5- and utr3-len represent the length of the coding sequence, 5' UTR and 3' UTR respectively. 
+- cds_start and cds_end represent the coordinates of the coding sequence start and end compared to the transcript. 
+- rel_pos represents the scaled metatrascript position of the epitranscriptomic site, between 0 and 3, where 0 represents TSS, 1 represents CDS start, 2 represent CDS end, and 3 represents p(A) site. 
+- abs_cds_start and abs_cds_end represent the absolute distance (in nt) of a given site from the cds start and end 
+- up_junc_dist and down_junc_dist repreesnt the absolute distance (in nt) of a given site from the nearest upstream and downstream splice-junction (on that specific transcript).
 
 ```
 Rscript R2_annotate.R [bed-like transcriptomic sites] [gtf annotation] [annotated bed-like output in transcriptomic coordinates]
@@ -66,14 +75,13 @@ Rscript R2_annotate.R [bed-like transcriptomic sites] [gtf annotation] [annotate
 
 ### Liftover transcriptomic sites to genomic coordinates
 
-Input file format: BED-like file of transcriptomic sites (col 1 = transcript)     
-Output file format: BED-like file of identical sites in genomic coordinates (col 1 = chromosome/scaffold)      
+Liftover converts a bed-like file of transcriptomic sites from transcriptomic to genomic coordinates. 
 
 ```
 Rscript R2_lift.R [BED-like transcriptomic sites] [GTF annotation] [annotated bed-like output in genomic coordinates]
 ```
 
-Note: Liftover can be complete independantly of annotation.
+Note: Liftover can be complete independantly of annotation, or following annotation. 
 
 ## Input and output data structure
 
@@ -87,7 +95,9 @@ R2Dtool is designed to work with tab-delimited, plain text BED-like files with a
 The GTF annotation provided must contain identical gene structures used to generate the transcriptome, including identical transcript names in the FASTA header. One option is to use genomes, transcriptomes and gene structures from the same genome release. Another option is for users to generate their own transcriptome using a genome and gene structure file, e.g. using gffread.  
 
 ### Utilities: Convert CHEUI model II output to a BED-like input
+
 - This script transposes CHEUI coordinates by +3 (BED interval start) and +4 (BED interval end) to represent a single nuecleotide
+
 ```
 bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 ```
