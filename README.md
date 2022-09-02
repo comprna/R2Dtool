@@ -11,8 +11,8 @@ Isoform-centric transcriptomic sites  ────┼──────── an
                                           │
        .=.                                └───── lift + annotate ───►   Annotated genome-centric transcriptomic sites
       '==c|
-      [)-+|
-      //'_|
+      [)-+|    <(RNA to DNA)
+      //'_|        
  snd /]==;\                                                                                                                                                                     
 ```
 
