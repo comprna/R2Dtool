@@ -1,7 +1,7 @@
 # R2DTool
 
 A utility for long-read isoform-centric epitranscriptomics that:
-  - Annotates (epi)transcriptomic position with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and 
+  - Annotates (epi)transcriptomic positions with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and 
   - Transposes transcriptomic coordinates to their underlying genomic coordinates to enable the comparison of epitranscriptomic sites between overlapping transcript isoforms, and also to enable visualization of epitranscriptomic sites on a genome browser.
 
 ```
