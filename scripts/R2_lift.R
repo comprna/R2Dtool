@@ -22,10 +22,9 @@ suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly
 
 mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>% 
   dplyr::rename(transcript_id = 1) %>% 
-  # mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
-  dplyr::rename(tx_coord = 2) %>% 
-  dplyr::rename(tx_coord_close = 3) %>% 
-  dplyr::mutate(tx_coord_start = tx_coord, tx_coord_end = tx_coord_close)
+  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
+  dplyr::rename(tx_coord_start = 2) %>% 
+  dplyr::rename(tx_coord_end = 3) 
 
 # collect the column names of columns 7+ 
 targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
@@ -54,7 +53,7 @@ print("preparing strand lookup table")
 strand_lookup <- exons_tib %>%
   dplyr::rename(transcript_id = group_name) %>%
   dplyr::select(transcript_id, strand) %>% dplyr::distinct() %>% 
-  # mutate(transcript_id = gsub("\\..*","", transcript_id)) %>%
+  mutate(transcript_id = gsub("\\..*","", transcript_id)) %>%
   dplyr::distinct()
 
 ##################################################
@@ -97,14 +96,6 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
 
 # separate the output 
 output <- output %>% separate(data, sep = ">_>", into = targetNames) 
-
-##################################################
-
-# fix the genome coordinate error 
-
-output <- output %>% 
-  mutate(start = if_else(strand == "-", start - 2, as.double(start))) %>% 
-  mutate(end = if_else(strand == "-", end - 2, as.double(end)))      
     
 ##################################################
 

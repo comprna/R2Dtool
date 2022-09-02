@@ -10,12 +10,6 @@ suppressMessages(suppressWarnings(library(GenomicFeatures, warn.conflicts = F, q
 suppressMessages(suppressWarnings(library(rtracklayer, warn.conflicts = F, quietly = T)))
 suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly = T)))
 
-# test data for Ensembl 
-# args <- c("~/Documents/txannotate/test/out_CHEUI_modelII.bed", "~/Documents/txannotate/test/GRCm39_subset.gtf", "~/Documents/txannotate/test/out_CHEUI_modelII_annotated.bed")
-
-# test data for GENCODE 
-# args <- c("/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_output.bed_temp.bed", "/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_annotation.gtf", "~/localGadiData/2022-06-14_liftover-cell-line-txannotate/output/HeLa_KO_m5C_CHEUI_site_level_annotated_output.bed")
-
 ################################################################################
 ################################################################################
 ################################################################################
@@ -24,7 +18,7 @@ suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly
 
 mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>% 
   dplyr::rename(transcript_id = 1) %>% 
-  # mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
+  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
   dplyr::rename(tx_coord = 2)
 
 ##################################################
@@ -108,6 +102,9 @@ junc_dist <- left_join(meta %>% dplyr::select(transcript_id, tx_coord), tx_junct
   ungroup() %>%
   dplyr::select(-tx_coord.y) %>%
   pivot_wider(names_from = type, values_from = dist)
+
+print("junc_dist")
+print(head(junc_dist))
 
 # attach this data to our previous output
 meta_dist <- left_join(meta, junc_dist %>% dplyr::select(transcript_id, tx_coord, up_junc_dist, down_junc_dist), by = c("transcript_id", "tx_coord"))
