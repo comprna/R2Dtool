@@ -19,7 +19,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
    - [Dependencies and installation](#dependencies-and-installation)
    - [Usage](#usage)
    - [Input and output data structure](#Input-and-output-data-structure)
-   - [Utilities: Convert CHEUI model II output to a BED-like input](#utilities--convert-cheui-model-ii-output-to-a-bed-like-input)
+   - [Utilities: Convert CHEUI model II output to a BED-like input](#utilities)
    - [General notes](#general-notes)
 
 ------------------------------------------
@@ -96,7 +96,8 @@ R2Dtool is designed to work with tab-delimited, plain text BED-like files with a
 
 The GTF annotation provided must contain identical gene structures used to generate the transcriptome, including identical transcript names in the FASTA header. One option is to use genomes, transcriptomes and gene structures from the same genome release. Another option is for users to generate their own transcriptome using a genome and gene structure file, e.g. using gffread.  
 
-### Utilities: Convert CHEUI model II output to a BED-like input
+## Utilities
+### Convert CHEUI model II output to a BED-like input
 
 - This script transposes CHEUI coordinates by +3 (BED interval start) and +4 (BED interval end) to represent a single nucleotides, and rearranges columns to become bed-like. 
 
@@ -104,7 +105,7 @@ The GTF annotation provided must contain identical gene structures used to gener
 bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 ```
 
-### General notes
+## General notes
 - Transcriptome to genome liftover relies only on transcript_id, site coordinates, and strand (columns 1:3,6)
 - The annotation used must be in GTF format and correspond correctly to the transcriptome used
 - Other columns aren't considered during annotation or liftover, and can be used to store additional information of interest
