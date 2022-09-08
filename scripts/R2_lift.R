@@ -49,9 +49,6 @@ exons <- exonsBy(gtf, "tx", use.names=TRUE)
 fixedNames <- names(exons) %>% as_tibble() %>% mutate(value = gsub("\\..*","",value)) %>% pull(value)
 names(exons) <- fixedNames
 
-print("exons")
-print(head(exons))
-
 # prepare the exons
 exons_tib <- as_tibble(as(exons, "data.frame"))
 
