@@ -11,7 +11,7 @@ suppressMessages(suppressWarnings(library(rtracklayer, warn.conflicts = F, quiet
 suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly = T)))
 
 
-# test data for GENCODE 
+# test data for GENCODE
 # args <- c("/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_output.bed_temp_annotated.bed", "/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_annotation.gtf", "/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_output.bed")
 
 ################################################################################
@@ -20,24 +20,24 @@ suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly
 
 # import bed file of transcriptome alignments
 
-mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>% 
-  dplyr::rename(transcript_id = 1) %>% 
-  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
-  dplyr::rename(tx_coord_start = 2) %>% 
-  dplyr::rename(tx_coord_end = 3) 
+mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>%
+  dplyr::rename(transcript_id = 1) %>%
+  # mutate(transcript_id = gsub("\\..*","",transcript_id)) %>%
+  dplyr::rename(tx_coord_start = 2) %>%
+  dplyr::rename(tx_coord_end = 3)
 
-# collect the column names of columns 7+ 
+# collect the column names of columns 7+
 targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
 
 # merge columns c(4,7+)
 mappedLocus <- unite(mappedLocus, metaname, c(4,7:length(colnames(mappedLocus))), sep = ">_>", remove = TRUE, na.rm = FALSE)
 
-# deselect strand 
+# deselect strand
 mappedLocus <- mappedLocus %>% select(-6)
 
 ##################################################
 
-# fetch transcript structures from transcriptome annotation 
+# fetch transcript structures from transcriptome annotation
 
 # read in reference transcripts
 gtf <- makeTxDbFromGFF(file=args[2], format = "gtf")
@@ -45,14 +45,21 @@ gtf <- makeTxDbFromGFF(file=args[2], format = "gtf")
 # make an exon database from the reference transcripts
 exons <- exonsBy(gtf, "tx", use.names=TRUE)
 
-# prepare the exons 
+# remove transcript versions from the transcript names
+fixedNames <- names(exons) %>% as_tibble() %>% mutate(value = gsub("\\..*","",value)) %>% pull(value)
+names(exons) <- fixedNames
+
+print("exons")
+print(head(exons))
+
+# prepare the exons
 exons_tib <- as_tibble(as(exons, "data.frame"))
 
 # make lookup table for strand
 print("preparing strand lookup table")
 strand_lookup <- exons_tib %>%
   dplyr::rename(transcript_id = group_name) %>%
-  dplyr::select(transcript_id, strand) %>% dplyr::distinct() %>% 
+  dplyr::select(transcript_id, strand) %>% dplyr::distinct() %>%
   mutate(transcript_id = gsub("\\..*","", transcript_id)) %>%
   dplyr::distinct()
 
@@ -90,17 +97,15 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
   unique() %>%
   dplyr::rename(chr = seqnames, data = X.name, transcript = X.seqnames) %>%
   mutate(score = ".") %>%
-  dplyr::select(chr, start, end, transcript, score, strand, data) %>% 
-  mutate(end = end + 1) %>% 
+  dplyr::select(chr, start, end, transcript, score, strand, data) %>%
+  mutate(end = end + 1) %>%
   rename("#chr" = chr)
 
-# separate the output 
-output <- output %>% separate(data, sep = ">_>", into = targetNames) 
-    
+# separate the output
+output <- output %>% separate(data, sep = ">_>", into = targetNames)
+
 ##################################################
 
 # write the output
 print("writing final output")
 write_tsv(output, args[3], col_names = T, append = FALSE)
-
-

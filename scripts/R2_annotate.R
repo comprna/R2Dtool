@@ -14,16 +14,17 @@ suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly
 ################################################################################
 ################################################################################
 
-# read in epitranscriptomic sites 
+# read in epitranscriptomic sites
 
-mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>% 
-  dplyr::rename(transcript_id = 1) %>% 
-  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>% 
+mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>%
+  dplyr::rename(transcript_id = 1) %>%
+  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>%
   dplyr::rename(tx_coord = 2)
+
 
 ##################################################
 
-# fetch data from transcriptome annotation 
+# fetch data from transcriptome annotation
 
 # read in reference transcripts
 gtf <- makeTxDbFromGFF(file=args[2], format = "gtf")
@@ -31,7 +32,7 @@ gtf <- makeTxDbFromGFF(file=args[2], format = "gtf")
 # make an exon database from the reference transcripts
 exons <- exonsBy(gtf, "tx", use.names=TRUE)
 
-# prepare the exons 
+# prepare the exons
 exons_tib <- as_tibble(as(exons, "data.frame"))
 
 # fetch the length of each transcript segment from the gtf
@@ -53,16 +54,18 @@ tx_biotype <- rtracklayer::import(args[2]) %>%
   dplyr::distinct()
 
 # merge the biotypes with the transcript segment lengths
-merged_metadata <- inner_join(tx_biotype, txlen, by = "transcript_id")
+merged_metadata <- inner_join(tx_biotype, txlen, by = "transcript_id") %>%
+  mutate(transcript_id = gsub("\\..*","",transcript_id))
 
 ##################################################
 
-# attach basal metadata to epitranscriptomic sites 
+# attach basal metadata to epitranscriptomic sites
 merge_out <- inner_join(mappedLocus, merged_metadata, by = "transcript_id")
 
+
 ##################################################
 
-# calculate metatranscipt coordinates 
+# calculate metatranscipt coordinates
 
 meta <- merge_out %>%
   mutate(cds_start = utr5_len,
@@ -89,7 +92,8 @@ tx_junctions <- exons_tib %>%
   dplyr::select(transcript_id, width, exon_rank) %>%
   mutate(junc_coord = cumsum(width)) %>%
   dplyr::rename(tx_coord = junc_coord) %>%
-  dplyr::select(transcript_id, tx_coord)
+  dplyr::select(transcript_id, tx_coord) %>%
+    mutate(transcript_id = gsub("\\..*","",transcript_id))
 
 # for each tested site, calculate the closest upstream and downstream junctions (where present) in tible tx_junctions
 junc_dist <- left_join(meta %>% dplyr::select(transcript_id, tx_coord), tx_junctions %>% dplyr::select(transcript_id, tx_coord), by = "transcript_id", suffix = c("", ".y")) %>%
@@ -111,9 +115,9 @@ meta_dist <- left_join(meta, junc_dist %>% dplyr::select(transcript_id, tx_coord
 
 ##################################################
 
-# rename output and print 
+# rename output and print
 
-final_output <- meta_dist %>% 
+final_output <- meta_dist %>%
   dplyr::rename(start = 2)
 
 # write the output
