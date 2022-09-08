@@ -22,7 +22,7 @@ suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly
 
 mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>%
   dplyr::rename(transcript_id = 1) %>%
-  # mutate(transcript_id = gsub("\\..*","",transcript_id)) %>%
+  mutate(transcript_id = gsub("\\..*","",transcript_id)) %>%
   dplyr::rename(tx_coord_start = 2) %>%
   dplyr::rename(tx_coord_end = 3)
 

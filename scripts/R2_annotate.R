@@ -62,7 +62,6 @@ merged_metadata <- inner_join(tx_biotype, txlen, by = "transcript_id") %>%
 # attach basal metadata to epitranscriptomic sites
 merge_out <- inner_join(mappedLocus, merged_metadata, by = "transcript_id")
 
-
 ##################################################
 
 # calculate metatranscipt coordinates
@@ -93,7 +92,7 @@ tx_junctions <- exons_tib %>%
   mutate(junc_coord = cumsum(width)) %>%
   dplyr::rename(tx_coord = junc_coord) %>%
   dplyr::select(transcript_id, tx_coord) %>%
-    mutate(transcript_id = gsub("\\..*","",transcript_id))
+  mutate(transcript_id = gsub("\\..*","",transcript_id))
 
 # for each tested site, calculate the closest upstream and downstream junctions (where present) in tible tx_junctions
 junc_dist <- left_join(meta %>% dplyr::select(transcript_id, tx_coord), tx_junctions %>% dplyr::select(transcript_id, tx_coord), by = "transcript_id", suffix = c("", ".y")) %>%
@@ -106,9 +105,6 @@ junc_dist <- left_join(meta %>% dplyr::select(transcript_id, tx_coord), tx_junct
   ungroup() %>%
   dplyr::select(-tx_coord.y) %>%
   pivot_wider(names_from = type, values_from = dist)
-
-print("junc_dist")
-print(head(junc_dist))
 
 # attach this data to our previous output
 meta_dist <- left_join(meta, junc_dist %>% dplyr::select(transcript_id, tx_coord, up_junc_dist, down_junc_dist), by = c("transcript_id", "tx_coord"))
