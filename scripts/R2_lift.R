@@ -98,7 +98,7 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
   dplyr::rename(chr = seqnames, data = X.name, transcript = X.seqnames) %>%
   mutate(score = ".") %>%
   dplyr::select(chr, start, end, transcript, score, strand, data) %>%
-  mutate(end = end + 1) %>%
+  mutate(start = start - 1) %>%
   rename("#chr" = chr)
 
 # separate the output
