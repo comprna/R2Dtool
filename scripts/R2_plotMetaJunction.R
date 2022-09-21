@@ -32,29 +32,29 @@ if (args[5] == "upper") {
   calls <- calls %>% mutate(filter = ifelse(get({{colName}}) < as.numeric(args[4]), "sig", "ns"))
 }
 
-# define breaks for plot 
-breaks <- seq(0,3,0.025) # iterate over break width 
-
-# cut the breaks 
-out_ratio <- calls %>% 
-  mutate(interval = cut(rel_pos, breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)) %>%
-  group_by(interval, filter) %>% 
+# get splice junction data 
+sj_data <- calls  %>% 
+  mutate(up_junc_dist = -up_junc_dist) %>% 
+  pivot_longer(cols = c(up_junc_dist, down_junc_dist), names_to = "type_dist", values_to = "junc_dist") %>% 
+  dplyr::select(-type_dist) %>% 
+  dplyr::filter(junc_dist < 355 & junc_dist > -355) %>% 
+  group_by(junc_dist, filter) %>% 
   summarise(n = n()) %>% 
   pivot_wider(names_from = "filter", values_from = "n") %>% 
   mutate(ratio = sig / (sig + ns))
 
 # plot 
-p <- ggplot(out_ratio, aes(x = interval, y = ratio)) + 
-  geom_point(alpha = 0.5, color = "red") + 
-  geom_smooth(span = 0.2, color = "red") + # iterate over loess span 
-  geom_vline(xintercept = c(80,40), col = "black") + # iterate vertical lines to match the breaks 
-  theme_minimal() + 
-  theme(text = element_text(size=14)) + 
+p <- ggplot(sj_data, aes(x = junc_dist, y = ratio)) + 
+  geom_point(alpha = 0.5, color = "blue") + 
+  geom_smooth(span = 0.2) + # iterate over loess span 
+  geom_vline(xintercept = 0, col = "black") + # iterate vertical lines to match the breaks 
+  theme(text = element_text(size=12)) + 
   theme(plot.title = element_text(hjust=0.5)) + 
-  ggtitle("Proportion of m6A/A in metatranscript bins") + 
-  xlab("Relative metatranscriptomic location") + ylab("Proportion of significant sites") + 
-  coord_cartesian(xlim=c(0,120)) + 
-  ylim(0,0.0125)
+  ggtitle("Methylation around splice junctions in all transcripts") + 
+  xlab("Absolute distance to splice junction (NT)") + ylab("Proportion of significant sites") +
+  scale_y_log10() + 
+  ylim(0,0.020) + 
+  theme_minimal() 
 
 ggsave(args[2], p, scale = 1,
        width = 115,
