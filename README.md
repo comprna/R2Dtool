@@ -1,4 +1,4 @@
-# R2DTool
+# R2Dtool
 
 A utility for long-read isoform-centric epitranscriptomics that:
   - Annotates (epi)transcriptomic positions with transcript-specific metatranscript coordinates and proximity to adjacent splice-junctions, and 
@@ -26,7 +26,7 @@ Isoform-centric transcriptomic sites  ────┼──────── an
 
 ## Dependencies and installation
 
-R2DTool scripts require no installation beyond the availability of R and the listed packages:
+R2Dtool scripts require no installation beyond the availability of R and the listed packages:
 
 Dependencies:
 ```
