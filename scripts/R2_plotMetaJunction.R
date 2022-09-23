@@ -8,13 +8,6 @@ if (length(args)!=3) {
   stop("\nUsage: Rscript R2_plotMetaTranscript.R "/path/to/annotated.bed? "/path/to/output.png", "<probability field>", "<cutoff>", "<upper/lower>", call.=FALSE)
 }
 
-# arguments for testing 
-args <- c("~/localGadiData/2022-09-21_R2Dtool/methylationCalls_annotated_lifted.bed",
-          "~/localGadiData/2022-09-21_R2Dtool/out.png", 
-          "probability", 
-          "0.9999", 
-          "upper")
-
 # load tidyverse, quietly 
 suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly = T)))
 

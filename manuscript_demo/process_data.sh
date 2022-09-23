@@ -26,3 +26,9 @@ cat <(head -n 1 "${wd}/methylationCalls_annotated_lifted.bed") <(awk '($11>0.999
 
 # compress
 cat "${wd}/methylationCalls_annotated_lifted_significant.bed" | gzip -c > "${wd}/methylationCalls_annotated_lifted_significant.bed.gz"
+
+# plotMetaTranscript
+time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "~/localGadiData/2022-09-21_R2Dtool/methylationCalls_annotated_lifted.bed" "~/localGadiData/2022-09-21_R2Dtool/out.png" "probability" "0.9999" "upper"
+
+# plotMetaJunction
+time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "~/localGadiData/2022-09-21_R2Dtool/methylationCalls_annotated_lifted.bed" "~/localGadiData/2022-09-21_R2Dtool/out.png" "probability" "0.9999" "upper"
