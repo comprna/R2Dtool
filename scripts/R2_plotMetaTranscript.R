@@ -36,16 +36,23 @@ out_ratio <- calls %>%
   Sys.time()
 
 # pre-render plot 
-ggplot(out_ratio, aes(x = interval, y = ratio, color = "red")) + 
-  geom_point(alpha = 0.5) + 
-  geom_smooth(span = 0.2) + # iterate over loess span 
+ggplot(out_ratio, aes(x = interval, y = ratio)) + 
+  geom_point(alpha = 0.5, color = "red") + 
+  geom_smooth(span = 0.2, color = "red") + # iterate over loess span 
   geom_vline(xintercept = c(80,40), col = "black") + # iterate vertical lines to match the breaks 
-  theme_bw() + 
-  theme(text = element_text(size=12)) + 
+  theme_minimal() + 
+  theme(text = element_text(size=14)) + 
   theme(plot.title = element_text(hjust=0.5)) + 
-  ggtitle("Ratio of significant sites in all transcripts") + 
+  ggtitle("Proportion of m6A/A in metatranscript bins") + 
   xlab("Relative metatranscriptomic location") + ylab("Proportion of significant sites") + 
-  ylim(0,0.010)
+  ylim(0,0.010) + 
+  coord_cartesian(xlim=c(0,120))
+
+ggsave("~/plot0.svg", plot = last_plot(), scale = 1,
+       width = 115,
+       height = 75,
+       units = c("mm"))
+
 
 # write the output
 print("writing final output")
@@ -71,10 +78,15 @@ ggplot(sj_data, aes(x = junc_dist, y = ratio)) +
   geom_point(alpha = 0.5, color = "blue") + 
   geom_smooth(span = 0.2) + # iterate over loess span 
   geom_vline(xintercept = 0, col = "black") + # iterate vertical lines to match the breaks 
-  theme_bw() + 
   theme(text = element_text(size=12)) + 
   theme(plot.title = element_text(hjust=0.5)) + 
   ggtitle("Methylation around splice junctions in all transcripts") + 
   xlab("Absolute distance to splice junction (NT)") + ylab("Proportion of significant sites") +
   scale_y_log10() + 
-  ylim(0,0.025) 
+  ylim(0,0.020) + 
+  theme_minimal() 
+
+ggsave("~/plot1.svg", plot = last_plot(), scale = 1,
+       width = 115,
+       height = 75,
+       units = c("mm"))
