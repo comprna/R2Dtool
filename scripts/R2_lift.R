@@ -20,20 +20,26 @@ suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly
 
 # import bed file of transcriptome alignments
 
-mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999) %>%
+mappedLocus <- read_tsv(file = args[1], col_names = F, guess_max = 999999999999, col_types = "fddfff") %>%
   dplyr::rename(transcript_id = 1) %>%
   mutate(transcript_id = gsub("\\..*","",transcript_id)) %>%
   dplyr::rename(tx_coord_start = 2) %>%
-  dplyr::rename(tx_coord_end = 3)
+  dplyr::rename(tx_coord_end = 3) %>%
+  dplyr::rename(name = 4, score = 5, strand = 6)
+
 
 # collect the column names of columns 7+
-targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
+# targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
+targetNames <- colnames(mappedLocus)[c(4,5)]
 
 # merge columns c(4,7+)
-mappedLocus <- unite(mappedLocus, metaname, c(4,7:length(colnames(mappedLocus))), sep = ">_>", remove = TRUE, na.rm = FALSE)
+# mappedLocus <- unite(mappedLocus, metaname, c(4,7:length(colnames(mappedLocus))), sep = ">_>", remove = TRUE, na.rm = FALSE)
+mappedLocus <- unite(mappedLocus, metaname, c(4,5), sep = ">_>", remove = TRUE, na.rm = FALSE)
+
 
 # deselect strand
-mappedLocus <- mappedLocus %>% select(-6)
+print(head(mappedLocus))
+mappedLocus <- mappedLocus %>% select(-5)
 
 ##################################################
 
@@ -64,7 +70,11 @@ strand_lookup <- exons_tib %>%
 
 # attach the correct strand to the bed sites
 print("reparing strand")
-mappedLocus_fixedStrand <- inner_join(mappedLocus, strand_lookup, by = "transcript_id")
+mappedLocus_fixedStrand <- inner_join(mappedLocus, strand_lookup, by = "transcript_id") %>%
+mutate(score = ".", .after = metaname)
+
+print("mappedLocus_fixedStrand")
+print(head(mappedLocus_fixedStrand))
 
 # write out the strand-repaired file as a temporary file
 print("writing strand bedfile")
@@ -95,11 +105,12 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
   dplyr::rename(chr = seqnames, data = X.name, transcript = X.seqnames) %>%
   mutate(score = ".") %>%
   dplyr::select(chr, start, end, transcript, score, strand, data) %>%
-  mutate(start = start - 1) %>%
-  rename("#chr" = chr)
+  mutate(start = start - 1)
 
 # separate the output
-output <- output %>% separate(data, sep = ">_>", into = targetNames)
+output <- output %>% separate(data, sep = ">_>", into = targetNames) %>%
+dplyr::select(chr, start, end, name, score, strand) %>%
+dplyr::rename("#chr" = chr)
 
 ##################################################
 
