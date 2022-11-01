@@ -45,7 +45,6 @@ txlen <- transcriptLengths(gtf, with.cds_len=TRUE, with.utr5_len=TRUE, with.utr3
 # rename the gene_type field in case a gencode GTF is used (transcript_biotype) only works for Ensembl GTFs?
 lookup <- c("transcript_biotype" = "gene_type", "transcript_biotype" = "original_biotype", "gene_name" = "ID")
 
-
 # gene_name <- parent needed for Pombe annotation
 # transcript biotype <- original biotype needed for pombe annotation
 
@@ -98,8 +97,9 @@ tx_junctions <- exons_tib %>%
   dplyr::select(transcript_id, tx_coord) %>%
   mutate(transcript_id = gsub("\\..*","",transcript_id))
 
+
 # for each tested site, calculate the closest upstream and downstream junctions (where present) in tible tx_junctions
-junc_dist <- left_join(meta %>% dplyr::select(transcript_id, tx_coord), tx_junctions %>% dplyr::select(transcript_id, tx_coord), by = "transcript_id", suffix = c("", ".y")) %>%
+junc_dist <- left_join(meta %>% dplyr::select(transcript_id, tx_coord) %>% unique(), tx_junctions %>% dplyr::select(transcript_id, tx_coord) %>% unique(), by = "transcript_id", suffix = c("", ".y")) %>%
   group_by(transcript_id) %>%
   mutate(up_junc_dist = tx_coord - tx_coord.y, down_junc_dist = tx_coord.y - tx_coord) %>%
   pivot_longer(., cols = c(up_junc_dist, down_junc_dist), names_to = "type", values_to = "dist") %>%
