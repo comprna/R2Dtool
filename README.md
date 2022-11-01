@@ -72,7 +72,7 @@ transcript_biotype | gene_name | gene_id | tx_len | cds_len | utr5_len | utr3_le
 - *up_junc_dist* and *down_junc_dist* repreesnt the absolute distance (in nt) of a given site from the nearest upstream and downstream splice-junction (on that specific transcript).
 
 ```
-Rscript R2_annotate.R [bed-like transcriptomic sites] [gtf annotation] [annotated bed-like output in transcriptomic coordinates]
+Rscript R2_annotate.R [input // bed-like transcriptomic sites] [gtf annotation] [output // annotated bed-like output in transcriptomic coordinates]
 ```
 
 ### Liftover transcriptomic sites to genomic coordinates
@@ -80,7 +80,7 @@ Rscript R2_annotate.R [bed-like transcriptomic sites] [gtf annotation] [annotate
 Liftover converts a bed-like file of transcriptomic sites from transcriptomic to genomic coordinates.
 
 ```
-Rscript R2_lift.R [BED-like transcriptomic sites] [GTF annotation] [annotated bed-like output in genomic coordinates]
+Rscript R2_lift.R [input // BED-like transcriptomic sites, with or without annotation] [GTF annotation] [output // annotated bed-like output in genomic coordinates]
 ```
 
 Note: Liftover can be complete independantly of annotation, or following annotation.
