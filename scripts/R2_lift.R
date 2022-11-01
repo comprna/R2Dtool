@@ -20,7 +20,7 @@ suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly
 
 # import bed file of transcriptome alignments
 
-mappedLocus <- read_tsv(file = args[1], col_names = F, guess_max = 999999999999, col_types = "fddfff") %>%
+mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999, col_types = "fddfff") %>%
   dplyr::rename(transcript_id = 1) %>%
   mutate(transcript_id = gsub("\\..*","",transcript_id)) %>%
   dplyr::rename(tx_coord_start = 2) %>%
@@ -29,17 +29,21 @@ mappedLocus <- read_tsv(file = args[1], col_names = F, guess_max = 999999999999,
 
 
 # collect the column names of columns 7+
-# targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
-targetNames <- colnames(mappedLocus)[c(4,5)]
+targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
+
+# not sure why this alternative line is here, and similar for line 41
+# targetNames <- colnames(mappedLocus)[c(4,5)]
 
 # merge columns c(4,7+)
-# mappedLocus <- unite(mappedLocus, metaname, c(4,7:length(colnames(mappedLocus))), sep = ">_>", remove = TRUE, na.rm = FALSE)
-mappedLocus <- unite(mappedLocus, metaname, c(4,5), sep = ">_>", remove = TRUE, na.rm = FALSE)
+mappedLocus <- unite(mappedLocus, metaname, c(4,7:length(colnames(mappedLocus))), sep = ">_>", remove = TRUE, na.rm = FALSE)
+
+
+# mappedLocus <- unite(mappedLocus, metaname, c(4,5), sep = ">_>", remove = TRUE, na.rm = FALSE)
 
 
 # deselect strand
 print(head(mappedLocus))
-mappedLocus <- mappedLocus %>% select(-5)
+mappedLocus <- mappedLocus %>% select(strand)
 
 ##################################################
 
@@ -74,7 +78,9 @@ mappedLocus_fixedStrand <- inner_join(mappedLocus, strand_lookup, by = "transcri
 mutate(score = ".", .after = metaname)
 
 print("mappedLocus_fixedStrand")
-print(head(mappedLocus_fixedStrand))
+print(head(mappedLocus_fixedStrand, n = 100))
+print("Quitting")
+quit()
 
 # write out the strand-repaired file as a temporary file
 print("writing strand bedfile")
