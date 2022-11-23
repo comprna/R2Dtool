@@ -118,7 +118,7 @@ R2Dtool is designed to work with tab-delimited, plain text BED-like files with a
 - column 5, representing strand, is assumed as being (+)
 - columns 4, and any column greater than 5 are preserved during annotation or liftover, and may be used to hold additional information, e.g. predictions of RNA modification stoichiometry, probability, etc.
 
-The GTF annotation provided must contain identical gene structures used to generate the transcriptome, including identical transcript names in the FASTA header. One option is to use genomes, transcriptomes and gene structures from the same genome release. Another option is for users to generate their own transcriptome using a genome and gene structure file, e.g. using gffread.  
+The GTF annotation provided must contain identical gene structures used to generate the transcriptome, including identical transcript names in the FASTA header. One option is to use genomes, transcriptomes and gene structures from the same genome release. Another option is for users to generate their own transcriptome using a genome and gene structure file, e.g. using gffread, or to generate a custom transcriptome using tools like RATTLE or Bambu. Note, the liftover requires 'exon' entries in the third column of the GTF, and the exon <-> transcript <-> gene map is identified from column 9 of the GTF.
 
 ## Utilities
 ### Convert CHEUI model II output to a BED-like input
