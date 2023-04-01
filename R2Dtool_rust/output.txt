@@ -1,0 +1,1 @@
+Chromosome	Start	End	Name	Score	Strand	end	name	score	strand	motif	coverage	stoichiometry	probability
