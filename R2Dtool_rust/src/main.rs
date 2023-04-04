@@ -116,6 +116,7 @@ fn main() {
         println!("Running annotate...");
         annotate::run_annotate(&annotate_matches);
     }
+
 }
 
 //

@@ -1,44 +1,71 @@
-use multimap::MultiMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use crate::parse_annotation::{Exon, read_gtf_file, read_gff_file};
+use crate::parse_annotation::{Transcript, read_gtf_file, read_gff_file};
+use std::collections::HashMap;
 
 pub fn convert_transcriptomic_to_genomic_coordinates(
-    site_fields: &[&str],
-    annotations: &MultiMap<String, Exon>,
-) -> Option<String> {
+    site_fields: &[&str], // input: tab-separated transcriptome position fields
+    annotations: &HashMap<String, Transcript>, // input: parsed annotation object
+) -> Option<String> { // return type: Option<String), either Some(String) or None
+    // Check if there are at least 4 fields in site_fields
     if site_fields.len() < 4 {
-        return None;
+        return None; // If not, return None
     }
 
+    // Extract the transcript ID with version from the first field
     let transcript_id_with_version = site_fields[0];
-    let transcript_id = transcript_id_with_version.split('.').next().unwrap(); // Add this line to remove version from transcript ID
+    // Remove the version from transcript ID
+    let transcript_id = transcript_id_with_version.split('.').next().unwrap();
+
+    // Parse the transcriptomic position (second field) as a u64
     let position: u64 = site_fields[1].parse().unwrap();
+
+    // Initialize the current_position variable to keep track of the cumulative exon lengths
     let mut current_position = 0;
 
-    if let Some(exons) = annotations.get_vec(transcript_id) {
-        for exon in exons {
-            let exon_length = exon.end - exon.start + 1;
-            if current_position + exon_length >= position { // Change this line
-                let genomic_position = if exon.strand == "+" {
-                    position - current_position + exon.start
+    // Check if there is a transcript associated with the given transcript_id
+    if let Some(transcript) = annotations.get(transcript_id) {
+        let exons = if transcript.strand.as_deref() == Some("-") {
+            transcript.exons.iter().rev().collect::<Vec<_>>()
+        } else {
+            transcript.exons.iter().collect::<Vec<_>>()
+        };
+
+        // Iterate through each exon in the transcript
+        for exon_data in &exons {
+            // Calculate the exon length
+            let exon_length = exon_data.end - exon_data.start + 1;
+            // Check if the current exon contains the transcriptomic position
+            if current_position + exon_length >= position {
+                // Calculate the genomic position based on the strand
+                let genomic_position = if transcript.strand.as_deref() == Some("+") {
+                    position - current_position + exon_data.start
                 } else {
-                    exon.end - (position - current_position) - 2
+                    exon_data.end - (position - current_position + 2)
                 };
-                let chrom = &exon.seq_id;
-                let genomic_strand = &exon.strand;
+                // Get the chromosome name
+                let chrom = &transcript.chromosome;
+                // Get the genomic strand
+                let genomic_strand = &transcript.strand;
+                // Join the additional columns (fields after the second one) using a tab character
                 let additional_columns = site_fields[2..].join("\t");
+                // Return the formatted output string
                 return Some(format!(
                     "{}\t{}\t{}\t\t\t{}\t{}",
-                    chrom, genomic_position, genomic_position + 1, genomic_strand, additional_columns
+                    chrom, genomic_position, genomic_position + 1, genomic_strand.as_deref().unwrap_or(""), additional_columns
                 ));
             }
+            // Increment the current_position by the exon_length
             current_position += exon_length;
         }
     }
 
+    // If no suitable transcript is found, print a warning and return None
+    eprintln!("Warning: No associated transcripts found for site '{}'.", transcript_id);
     None
 }
+
+
 
 pub fn run_liftover(matches: &clap::ArgMatches) {
     let gff_file = matches.value_of("gff").unwrap();
@@ -52,8 +79,8 @@ pub fn run_liftover(matches: &clap::ArgMatches) {
         read_gff_file(gff_file)
     };
 
+    // Print the annotations in a table
     // preview_annotations(&annotations);
-    // print_exon_info(&annotations);
     // std::process::exit(0);
 
     let has_header = matches.is_present("header");
@@ -69,7 +96,6 @@ pub fn run_liftover(matches: &clap::ArgMatches) {
     if has_header {
         input_reader.read_line(&mut header).unwrap();
         let header_fields: Vec<&str> = header.trim().split('\t').collect();
-        // println!("Header: {:?}", header_fields);
 
         // Update the header for the output file
         let output_header = format!(
@@ -93,5 +119,24 @@ pub fn run_liftover(matches: &clap::ArgMatches) {
             writeln!(output_writer, "{}", genomic_coordinates).unwrap();
         }
         line.clear();
+    }
+}
+
+// pub fn preview_annotations(annotations: &HashMap<String, Transcript>) {
+//     println!("Number of annotations: {}", annotations.len()); // Add this line
+//     for (key, transcript) in annotations {
+//         println!("Annotations start");
+//         println!("Transcript ID: {}", key);
+//         println!("{:#?}", transcript);
+//         println!("Annotations end");
+//     }
+// }
+
+pub fn print_exon_info(annotations: &HashMap<String, Transcript>) {
+    for (key, transcript) in annotations {
+        println!("Transcript ID: {}", key);
+        for (i, exon_data) in transcript.exons.iter().enumerate() {
+            println!("Exon {}: start={}, end={}", i + 1, exon_data.start, exon_data.end);
+        }
     }
 }
