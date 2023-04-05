@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use multimap::MultiMap;
 use bio::io::gff;
 
@@ -33,7 +33,6 @@ pub struct Transcript {
     pub chromosome: String, // Add this line
 }
 
-
 // Default trait for transript structure
 impl Default for Transcript {
     fn default() -> Self {
@@ -52,19 +51,17 @@ impl Default for Transcript {
     }
 }
 
-// Read the gtf file
-// create a HashMap<String, Transcript>, each key (a String) will map to a single Transcript object.
+// Read the gtf file; create a HashMap<String, Transcript>, each key (a String) will map to a single Transcript object.
 // each transcript has up to several exon objects stored in the exons field, which is a vector of Exon structs.
 pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
-
-    // create a empty hashmap, transcripts
+    // create an empty hashmap, transcripts
     let mut transcripts: HashMap<String, Transcript> = HashMap::new();
 
-    // initialise the reader
+    // initialize the reader
     let mut reader = gff::Reader::from_file(gtf_file, gff::GffType::GTF2).unwrap();
 
-    // define possible keys of the biotype; includes  Ensembl, gencode, flybase, pombase, (others?)
-    let biotype_keys = vec!["gene_biotype", "gene_type", "transcript_biotype"];
+    // define possible keys of the biotype; includes Ensembl, gencode, flybase, pombase, (others?)
+    let biotype_keys = vec!["transcript_biotype", "transcript_type", "gene_type"];
 
     // slice the biotype, if it exists
     fn find_biotype(attributes: &HashMap<String, String>, keys: &[&str]) -> Option<String> {
@@ -76,26 +73,21 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
         None
     }
 
+    // make an empty hashset to print encountered transcripts
+    let mut encountered_transcripts: HashSet<String> = HashSet::new();
+
     // loop over the records of the gtf file
     for record in reader.records() {
 
-        // print lines to Debug
-        // println!("Record found: {:?}", record);
-
-        // unwrap the record and store in 'record' object
         let record = record.unwrap();
 
-        // skip header records if present
         if record.feature_type() == "#" {
-            continue;
+            continue; // skip header records if present
         }
 
-        // parse attributes
-        let attributes = parse_gff_attributes(record.attributes());
+        let attributes = parse_gff_attributes(record.attributes()); //parse attibutes
         if let Some(transcript_id_with_version) = attributes.get("transcript_id") {
-            let transcript_id = transcript_id_with_version.split('.').next().unwrap(); // Remove version from transcript ID
-            let transcript_id = transcript_id.to_string();
-
+            let transcript_id = transcript_id_with_version.split('.').next().unwrap().to_string(); // Remove version from transcript ID
             let transcript = transcripts.entry(transcript_id.clone()).or_insert_with(|| {
                 let biotype = find_biotype(&attributes, &biotype_keys);
                 let strand = record.strand().expect("Missing strand information").strand_symbol().to_string(); // Get strand for transcript
@@ -110,7 +102,7 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
                     biotype,
                     splice_junction_positions: Vec::new(),
                     strand: Some(strand),
-                    chromosome, // Add this line
+                    chromosome,
                 }
             });
 
@@ -133,6 +125,8 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
                         feature: Some(record.feature_type().to_string()),
                         length: feature_length,
                     };
+
+                    // store the exon in the transcript
                     transcript.exons.push(exon);
                 }
                 "CDS" => {
@@ -144,12 +138,31 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
                 "three_prime_utr" | "3UTR" => {
                     transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature_length);
                 }
+                "transcript" => {
+                    // check for duplicates
+                    if !encountered_transcripts.insert(transcript_id.clone()) {
+                        eprintln!(
+                            "Warning: More than one transcript with the same name '{}' found. Please check the GTF file.",
+                            transcript_id
+                        );
+                    }
+                }
                 _ => (),
             }
         }
     }
 
-    // Update splice_junction_positions for each transcript
+    // Safety check to ensure that all exons are on the same chromosome (PAR_Y case)
+    transcripts.retain(|_, transcript| {
+        let exon_seq_id = transcript.exons.get(0).map(|exon| &exon.seq_id);
+        if let Some(exon_seq_id) = exon_seq_id {
+            transcript.exons.iter().all(|exon| exon.seq_id == *exon_seq_id)
+        } else {
+            false
+        }
+    });
+
+    // splice positions
     for transcript in transcripts.values_mut() {
         transcript.exons.sort_by_key(|exon| exon.start);
 
@@ -161,7 +174,13 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
         }
     }
 
-    println!("Size of the transcripts hashmap: {}", transcripts.len()); // Add this line
+    // check that the transcript length is consistent
+    // for transcript in transcripts.values() {
+    //     check_transcript_length(transcript);
+    // }
+
+    // check transcript count
+    // println!("Size of the transcripts hashmap: {}", transcripts.len()); // Add this line
     transcripts
 }
 
@@ -210,9 +229,26 @@ pub fn read_gff_file(gff_file: &str) -> HashMap<String, Transcript> {
                 feature: Some(feature_type.to_string()),
                 length: (*record.end() - *record.start() + 1) as u64,
             };
+
             if let Some(transcript_id_with_version) = exon.attributes.get("transcript_id") {
                 let transcript_id = transcript_id_with_version.split('.').next().unwrap(); // Remove version from transcript ID
                 let transcript_id = transcript_id.to_string();
+
+                // Safety check to ensure that all exons are on the same chromosome (PAR_Y case)
+                transcripts.retain(|_, transcript| {
+                    if transcript.chromosome == exon.seq_id {
+                        transcript.exons.push(exon.clone());
+                        true
+                    } else {
+                        eprintln!(
+                            "Warning: Transcript {} has exons on different chromosomes. Removing transcript from object.",
+                            transcript.transcript_id
+                        );
+                        false
+                    }
+                });
+
+
 
                 let transcript = transcripts.entry(transcript_id.clone()).or_insert_with(|| {
                     let biotype = find_biotype(&exon.attributes, &biotype_keys);
@@ -262,113 +298,37 @@ pub fn parse_gff_attributes(attributes: &MultiMap<String, String>) -> HashMap<St
     attr_map
 }
 
-// pub fn multimap_to_hashmap(multimap: &MultiMap<String, String>) -> HashMap<String, String> {
-//     let mut hashmap = HashMap::new();
-//     for (key, value) in multimap.iter() {
-//         hashmap.insert(key.clone(), value.clone());
-//     }
-//     hashmap
-// }
-//
 
 
 
-// pub fn parse_annotations(annotations: &MultiMap<String, Exon>) -> HashMap<String, Transcript> {
-//     let mut transcripts: HashMap<String, Transcript> = HashMap::new();
-//
-//     for (transcript_id, exons) in annotations.iter_all() {
-//         let transcript_id_no_version = transcript_id.split('.').next().unwrap().to_string();
-//         let exons: Vec<Exon> = exons.clone().into_iter().collect();
-//
-//         if let Some(transcript) = transcripts.get_mut(&transcript_id_no_version) {
-//             transcript.exons = exons;
-//         } else {
-//             let transcript = Transcript {
-//                 transcript_id: transcript_id.clone(),
-//                 utr5_len: None,
-//                 cds_len: None,
-//                 utr3_len: None,
-//                 has_missing_features: false,
-//                 exons,
-//                 biotype: None, // Add this line
-//                 splice_junction_positions: Vec::new(), // Add this line
-//
-//             };
-//             transcripts.insert(transcript_id_no_version.clone(), transcript);
-//         }
+
+
+
+
+
+
+
+
+
+
+
+// safety code
+
+// check transcript length
+// fn check_transcript_length(transcript: &Transcript) {
+//     let mut total_exon_length: u64 = 0;
+//     for exon in &transcript.exons {
+//         total_exon_length += exon.length;
 //     }
 //
-//     // println!("Number of exons per transcript:");
-//     // for (transcript_id, exons) in annotations {
-//     //     println!("{}: {} exons", transcript_id, exons.len());
-//     // }
+//     let transcript_length = transcript.utr5_len.unwrap_or(0)
+//     + transcript.cds_len.unwrap_or(0)
+//     + transcript.utr3_len.unwrap_or(0) + 3;
 //
-//     transcripts
-// }
-
-// pub fn parse_annotations(annotations: &MultiMap<String, Exon>) -> HashMap<String, Transcript> {
-//     let mut transcripts: HashMap<String, Transcript> = HashMap::new();
-//
-//     for (transcript_id, exon) in annotations.iter() {
-//         let transcript = transcripts.entry(transcript_id.to_string()).or_insert_with(|| Transcript {
-//             transcript_id: transcript_id.clone(),
-//             utr5_len: None,
-//             cds_len: None,
-//             utr3_len: None,
-//             has_missing_features: false,
-//             exons: Vec::new(),
-//         });
-//
-//         transcript.exons.push(exon.to_owned());
-//     }
-//
-//     // Check if any of the features are missing
-//     for (_, transcript) in transcripts.iter_mut() {
-//         if transcript.utr5_len.is_none() || transcript.cds_len.is_none() || transcript.utr3_len.is_none() {
-//             transcript.has_missing_features = true;
-//         }
-//     }
-//
-//     // Print the number of exons per transcript
-//     println!("Number of exons per transcript:");
-//     for (transcript_id, exons) in annotations {
-//         println!("{}: {} exons", transcript_id, exons.len());
-//     }
-//
-//
-//     transcripts
-// }
-
-
-
-// pub fn preview_annotations(annotations: &MultiMap<String, Exon>) {
-//     println!("Previewing the first transcript:");
-//
-//     for (key, exons) in annotations.iter_all() {
-//         println!("Transcript ID: {}", key);
-//         for exon in exons {
-//             println!("  Exon: {:?}", exon);
-//         }
-//         // break; // Add this line to exit the loop after the first transcript
-//     }
-// }
-
-// pub fn print_exon_info(annotations: &MultiMap<String, Exon>) {
-//     // Print table headers
-//     println!(
-//         "{:<10} {:<10} {:<15} {:<15} {:<7}",
-//         "Start", "End", "Transcript ID", "Gene ID", "Strand"
-//     );
-//     println!("{}", "-".repeat(57));
-//
-//     let na_gene_id = String::from("N/A");
-//
-//     for (transcript_id, exon) in annotations.iter() {
-//         let gene_id_str = exon.attributes.get("gene_id").unwrap_or(&na_gene_id);
-//
-//         println!(
-//             "{:<10} {:<10} {:<15} {:<15} {:<7}",
-//             exon.start, exon.end, transcript_id, gene_id_str, exon.strand
+//     if total_exon_length != transcript_length {
+//         eprintln!(
+//             "Warning: Transcript {} has inconsistent exon lengths. Total exon length: {}, Transcript length: {}",
+//             transcript.transcript_id, total_exon_length, transcript_length
 //         );
 //     }
 // }

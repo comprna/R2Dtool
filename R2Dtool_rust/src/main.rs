@@ -106,14 +106,14 @@ fn main() {
     // Handle the liftover subcommand
     if let Some(liftover_matches) = matches.subcommand_matches("liftover") {
         // Call your liftover function with liftover_matches as an argument
-        println!("Running liftover...");
+        eprintln!("Running liftover...");
         liftover::run_liftover(&liftover_matches);
     }
 
     // Handle the annotate subcommand
     if let Some(annotate_matches) = matches.subcommand_matches("annotate") {
         // Call your annotate function with annotate_matches as an argument
-        println!("Running annotate...");
+        eprintln!("Running annotate...");
         annotate::run_annotate(&annotate_matches);
     }
 

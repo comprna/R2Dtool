@@ -51,8 +51,8 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
                 let additional_columns = site_fields[2..].join("\t");
                 // Return the formatted output string
                 return Some(format!(
-                    "{}\t{}\t{}\t\t\t{}\t{}",
-                    chrom, genomic_position, genomic_position + 1, genomic_strand.as_deref().unwrap_or(""), additional_columns
+                    "{}\t{}\t{}\t\t\t{}\t{}\t{}",
+                    chrom, genomic_position, genomic_position + 1, genomic_strand.as_deref().unwrap_or(""), site_fields[0], additional_columns
                 ));
             }
             // Increment the current_position by the exon_length
@@ -64,8 +64,6 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
     eprintln!("Warning: No associated transcripts found for site '{}'.", transcript_id);
     None
 }
-
-
 
 pub fn run_liftover(matches: &clap::ArgMatches) {
     let gff_file = matches.value_of("gff").unwrap();

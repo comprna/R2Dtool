@@ -13,7 +13,7 @@ pub struct SpliceSite {
 fn calculate_meta_coordinates(tx_coord: u64, utr5_len: u64, cds_len: u64, utr3_len: u64) -> (f64, i64, i64) {
     let cds_start = utr5_len;
     let cds_end = utr5_len + cds_len;
-    let tx_end = cds_end + utr3_len;
+    let _tx_end = cds_end + utr3_len;
 
     let rel_pos = if tx_coord < cds_start {
         tx_coord as f64 / cds_start as f64
@@ -146,16 +146,16 @@ pub fn run_annotate(matches: &clap::ArgMatches) {
         let transcript_id_with_version = fields[0];
         let transcript_id = transcript_id_with_version.split('.').next().unwrap(); // Add this line to remove version from transcript ID
         let tx_coord: u64 = fields[1].parse().unwrap();
-        println!("Processing transcript ID: {:?}", transcript_id); // Add this print statement
+        // println!("Processing transcript ID: {:?}", transcript_id); // Add this print statement
 
         if let Some(transcript) = transcripts.get(transcript_id) {
-            println!("Found transcript: {:?}", transcript); // Add this print statement
+            // println!("Found transcript: {:?}", transcript); // Add this print statement
             if let (Some(utr5_len), Some(cds_len), Some(utr3_len)) = (transcript.utr5_len, transcript.cds_len, transcript.utr3_len) {
                 let (rel_pos, abs_cds_start, abs_cds_end) = calculate_meta_coordinates(tx_coord, utr5_len, cds_len, utr3_len);
 
                 // Calculate splice site distances
                 if let Some(splice_sites) = splice_sites.get(transcript_id) {
-                    println!("Found splice sites: {:?}", splice_sites); // Add this print statement
+                    // println!("Found splice sites: {:?}", splice_sites); // Add this print statement
                     let (upstream_ss_distance, downstream_ss_distance) = splice_site_distances(tx_coord, splice_sites);
 
                     let output_line = format!(
