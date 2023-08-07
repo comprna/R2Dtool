@@ -48,7 +48,7 @@ lookup <- c("transcript_biotype" = "gene_type", "transcript_biotype" = "original
 # gene_name <- parent needed for Pombe annotation
 # transcript biotype <- original biotype needed for pombe annotation
 
-# the last command doesn't store biotype, so we read in the gtf again using another package
+# store transcript biotype information using rtracklayer 
 tx_biotype <- rtracklayer::import(args[2]) %>%
   as_tibble() %>%
   dplyr::rename(any_of(lookup)) %>%
@@ -62,13 +62,12 @@ merged_metadata <- inner_join(tx_biotype, txlen, by = "transcript_id") %>%
 
 ##################################################
 
-# attach basal metadata to epitranscriptomic sites
+# attach original metadata to epitranscriptomic sites
 merge_out <- inner_join(mappedLocus, merged_metadata, by = "transcript_id")
 
 ##################################################
 
 # calculate metatranscipt coordinates
-
 meta <- merge_out %>%
   mutate(cds_start = utr5_len,
          cds_end = utr5_len + cds_len,
@@ -97,9 +96,14 @@ tx_junctions <- exons_tib %>%
   dplyr::select(transcript_id, tx_coord) %>%
   mutate(transcript_id = gsub("\\..*","",transcript_id))
 
-
 # for each tested site, calculate the closest upstream and downstream junctions (where present) in tible tx_junctions
-junc_dist <- left_join(meta %>% dplyr::select(transcript_id, tx_coord) %>% unique(), tx_junctions %>% dplyr::select(transcript_id, tx_coord) %>% unique(), by = "transcript_id", suffix = c("", ".y")) %>%
+junc_dist <- left_join(meta %>% 
+                         dplyr::select(transcript_id, tx_coord) %>% 
+                         unique(), 
+                       tx_junctions %>% 
+                         dplyr::select(transcript_id, tx_coord) %>% 
+                         unique(), 
+                       by = "transcript_id", suffix = c("", ".y"), relationship = "many-to-many") %>%
   group_by(transcript_id) %>%
   mutate(up_junc_dist = tx_coord - tx_coord.y, down_junc_dist = tx_coord.y - tx_coord) %>%
   pivot_longer(., cols = c(up_junc_dist, down_junc_dist), names_to = "type", values_to = "dist") %>%

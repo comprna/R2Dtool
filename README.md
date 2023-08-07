@@ -83,7 +83,7 @@ Liftover converts a bed-like file of transcriptomic sites from transcriptomic to
 Rscript R2_lift.R [input // BED-like transcriptomic sites, with or without annotation] [GTF reference] [output // annotated bed-like output in genomic coordinates]
 ```
 
-Note: Liftover can be complete independantly of annotation, or following annotation.
+Note: Liftover can be complete independently of annotation, or following annotation.
 
 ### Make a metatranscript plot
 
@@ -91,17 +91,23 @@ Note: Liftover can be complete independantly of annotation, or following annotat
 Rscript R2_plotMetaTranscript.R [annotated transcriptomic sites] [save path for plot, including .png/.svg extension] [name of filter field] [cutoff for significant sites] [lower/upper cutoff for significant sites]
 ```
 
+Optional argument: 
+- The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
+
 Notes:
 - *filter field* corresponds to the column name by which significant sites are selected
 - *cutoff* is the value of the filter field at which significant sites are chosen
 - *lower/upper* allows the selection of significant sites which have a value either *lower* or *higher* than the cutoff.
-- It is recommended that users use the plotMetaTranscript code as a starting point to generate publicaion quality metaTranscript plot. The code is annotated and easily edited.
+- It is recommended that users use the plotMetaTranscript code as a starting point to generate publication quality metaTranscript plot. The code is annotated and easily edited.
 
 ### Make a metajunction plot
 
 ```
 Rscript R2_plotMetaJunction.R [annotated transcriptomic sites] [save path for plot, including .png/.svg extension] [name of filter field] [cutoff for significant sites] [lower/upper cutoff for significant sites]
 ```
+
+Optional argument: 
+- The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
 
 Notes:
 - *filter field* corresponds to the column name by which significant sites are selected

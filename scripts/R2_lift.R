@@ -11,15 +11,11 @@ suppressMessages(suppressWarnings(library(rtracklayer, warn.conflicts = F, quiet
 suppressMessages(suppressWarnings(library(tidyverse, warn.conflicts = F, quietly = T)))
 
 
-# test data for GENCODE
-# args <- c("/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_output.bed_temp_annotated.bed", "/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_annotation.gtf", "/Users/AJlocal/localGadiData/2022-06-14_liftover-cell-line-txannotate/rapid_test_data/test_output.bed")
-
 ################################################################################
 ################################################################################
 ################################################################################
 
 # import bed file of transcriptome alignments
-
 mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999, col_types = "fddfff") %>%
   dplyr::rename(transcript_id = 1) %>%
   mutate(transcript_id = gsub("\\..*","",transcript_id)) %>%
@@ -31,19 +27,11 @@ mappedLocus <- read_tsv(file = args[1], col_names = T, guess_max = 999999999999,
 # collect the column names of columns 7+
 targetNames <- colnames(mappedLocus)[c(4,7:length(colnames(mappedLocus)))]
 
-# not sure why this alternative line is here, and similar for line 41
-# targetNames <- colnames(mappedLocus)[c(4,5)]
-
 # merge columns c(4,7+)
 mappedLocus <- unite(mappedLocus, metaname, c(4,7:length(colnames(mappedLocus))), sep = ">_>", remove = TRUE, na.rm = FALSE)
 
-
-# mappedLocus <- unite(mappedLocus, metaname, c(4,5), sep = ">_>", remove = TRUE, na.rm = FALSE)
-
-
 # deselect strand
-print(head(mappedLocus))
-mappedLocus <- mappedLocus %>% select(strand)
+mappedLocus <- mappedLocus %>% dplyr::select(-6)
 
 ##################################################
 
@@ -73,14 +61,13 @@ strand_lookup <- exons_tib %>%
 ##################################################
 
 # attach the correct strand to the bed sites
-print("reparing strand")
+print("Repairing strand")
 mappedLocus_fixedStrand <- inner_join(mappedLocus, strand_lookup, by = "transcript_id") %>%
-mutate(score = ".", .after = metaname)
+  mutate(score = ".", .after = metaname)
 
-print("mappedLocus_fixedStrand")
-print(head(mappedLocus_fixedStrand, n = 100))
-print("Quitting")
-quit()
+# diagnostic print statements 
+# print("mappedLocus_fixedStrand")
+# print(head(mappedLocus_fixedStrand))
 
 # write out the strand-repaired file as a temporary file
 print("writing strand bedfile")
@@ -97,7 +84,7 @@ print("mapping transcript coordinates to genome")
 genomeLocus <- mapFromTranscripts(x=mappedLocus, transcripts=exons)
 
 # bind score to output
-# the score column contains cheui-specific output (e.g. stoich, prob, coverage, which we aggreagate into the score column and delimit using semicolons)
+# the score column contains cheui-specific output (e.g. stoich, prob, coverage, which we aggregate into the score column and delimit using semicolons)
 print("binding output")
 mcols(genomeLocus)<-cbind(mcols(genomeLocus),DataFrame(mappedLocus[genomeLocus$xHits]))
 
@@ -111,12 +98,15 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
   dplyr::rename(chr = seqnames, data = X.name, transcript = X.seqnames) %>%
   mutate(score = ".") %>%
   dplyr::select(chr, start, end, transcript, score, strand, data) %>%
-  mutate(start = start - 1)
+  mutate(
+    start = ifelse(strand == "-", start - 3, start),
+    end = ifelse(strand == "+", end + 1, end - 2)
+  )
 
 # separate the output
 output <- output %>% separate(data, sep = ">_>", into = targetNames) %>%
-dplyr::select(chr, start, end, name, score, strand) %>%
-dplyr::rename("#chr" = chr)
+  dplyr::select(chr, start, end, name, score, strand) %>%
+  dplyr::rename("#chr" = chr)
 
 ##################################################
 
