@@ -99,8 +99,8 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
   mutate(score = ".") %>%
   dplyr::select(chr, start, end, transcript, score, strand, data) %>%
   mutate(
-    start = ifelse(strand == "-", start - 3, start),
-    end = ifelse(strand == "+", end + 1, end - 2)
+    start = ifelse(strand == "-", start - 2, start),
+    end = ifelse(strand == "+", end + 1, end - 1)
   )
 
 # separate the output
