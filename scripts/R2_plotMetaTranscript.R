@@ -12,9 +12,17 @@ if ("-c" %in% args) {
   args <- args[-c(index, index + 1)]  # Remove the flag and its value from the args
 }
 
+# check for optional -o flag for output path
+output_path <- NULL
+if ("-o" %in% args) {
+  index <- which(args == "-o")
+  output_path <- args[index + 1]
+  args <- args[-c(index, index + 1)]  # Remove the flag and its value from the args
+}
+
 # Check number of positional arguments
 if (length(args) != 5) {
-  stop("\nUsage: Rscript R2_plotMetaTranscript.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom']", call. = FALSE)
+  stop("\nUsage: Rscript R2_plotMetaTranscript.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output.tsv']", call. = FALSE)
 }
 
 print(paste("Using", ci_method, "method for confidence intervals."))
@@ -115,7 +123,13 @@ calls <- filter_calls(input_file, col_name, cutoff, direction)
 out_ratio <- compute_ratio(calls, ci_method)
 
 # for diagnostic; print the output ratio 
-print(out_ratio)
+# print(out_ratio)
+
+# write out_ratio to path set by -o flag 
+if (!is.null(output_path)) {
+  print(paste("Writing out_ratio to", output_path))
+  write_tsv(out_ratio, output_path)
+}
 
 # plot the ratio of significant sites at each metatranscript bin 
 p <- plot_ratio(out_ratio, ci_method)

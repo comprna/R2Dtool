@@ -12,9 +12,17 @@ if ("-c" %in% args) {
   args <- args[-c(index, index + 1)]  # Remove the flag and its value from the args
 }
 
+# check for optional -o flag for output path
+output_path <- NULL
+if ("-o" %in% args) {
+  index <- which(args == "-o")
+  output_path <- args[index + 1]
+  args <- args[-c(index, index + 1)]  # Remove the flag and its value from the args
+}
+
 # check number of positional arguments
 if (length(args) != 5) {
-  stop("\nUsage: Rscript R2_plotMetaJunction.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom']", call. = FALSE)
+  stop("\nUsage: Rscript R2_plotMetaJunction.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output_table.tsv']", call. = FALSE)
 }
 
 print(paste("Using", ci_method, "method for confidence intervals."))
@@ -101,9 +109,21 @@ plot_sj_data <- function(sj_data, ci_method) {
   return(p)
 }
 
+# filter calls 
 calls <- filter_calls(input_file, col_name, cutoff, direction)
+
+# calculate sj data 
 sj_data <- get_sj_data(calls, ci_method)
+
+# write sj data to output, if requested 
+if (!is.null(output_path)) {
+  print(paste("Writing sj_data to", output_path))
+  write_tsv(sj_data, output_path)
+}
+
+# generate plot 
 p <- plot_sj_data(sj_data, ci_method)
 
+# save plot 
 ggsave(output_file, p, scale = 4, width = 850, height = 750, units = c("px"))
 

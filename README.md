@@ -91,8 +91,9 @@ Note: Liftover can be complete independently of annotation, or following annotat
 Rscript R2_plotMetaTranscript.R [annotated transcriptomic sites] [save path for plot, including .png/.svg extension] [name of filter field] [cutoff for significant sites] [lower/upper cutoff for significant sites]
 ```
 
-Optional argument: 
+Optional arguments: 
 - The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
+- The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metatranscript data as a tab-separated file 
 
 Notes:
 - *filter field* corresponds to the column name by which significant sites are selected
@@ -106,8 +107,9 @@ Notes:
 Rscript R2_plotMetaJunction.R [annotated transcriptomic sites] [save path for plot, including .png/.svg extension] [name of filter field] [cutoff for significant sites] [lower/upper cutoff for significant sites]
 ```
 
-Optional argument: 
+Optional arguments: 
 - The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
+- The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metajunction data as a tab-separated file 
 
 Notes:
 - *filter field* corresponds to the column name by which significant sites are selected
