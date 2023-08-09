@@ -71,7 +71,29 @@ mappedLocus_fixedStrand <- inner_join(mappedLocus, strand_lookup, by = "transcri
 
 # write out the strand-repaired file as a temporary file
 print("writing strand bedfile")
-write_tsv(mappedLocus_fixedStrand, args[3], col_names = F)
+
+# Filter for rows where columns 1-3 or 6 are NA
+na_rows <- rowSums(is.na(mappedLocus_fixedStrand[c(1, 2, 3, 6)])) > 0
+na_count <- sum(na_rows)
+
+# Filter for rows where col3 - col2 is not greater than 1
+diff_not_greater <- (mappedLocus_fixedStrand$tx_coord_end - mappedLocus_fixedStrand$tx_coord_start) <= 0
+diff_count <- sum(diff_not_greater)
+
+# Combine both filters
+filters <- na_rows | diff_not_greater
+
+# Filter the data
+filtered_data <- mappedLocus_fixedStrand[!filters, ]
+
+# Write the filtered data to a TSV file
+write_tsv(filtered_data, args[3], col_names = FALSE)
+
+# Print the count of omitted rows
+cat("Omitted", na_count, "rows due to NAs in columns 1-3 or 6.\n")
+cat("Omitted", diff_count, "rows due to zero or negative width. \n")
+
+
 
 ##################################################
 
@@ -105,7 +127,7 @@ output <- genome_coordinates %>% dplyr::select(seqnames, start, end, X.name, X.s
 
 # separate the output
 output <- output %>% separate(data, sep = ">_>", into = targetNames) %>%
-  dplyr::select(chr, start, end, name, score, strand) %>%
+  # dplyr::select(chr, start, end, name, score, strand) %>%
   dplyr::rename("#chr" = chr)
 
 ##################################################
