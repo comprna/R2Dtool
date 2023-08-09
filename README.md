@@ -94,6 +94,7 @@ Rscript R2_plotMetaTranscript.R [annotated transcriptomic sites] [save path for 
 Optional arguments: 
 - The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
 - The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metatranscript data as a tab-separated file 
+- The flag "-l" displays transcript region labels (5' UTR, CDS, 3'UTR) on the plot (default = FALSE)
 
 Notes:
 - *filter field* corresponds to the column name by which significant sites are selected

@@ -3,8 +3,9 @@
 ## read positional arguments while ensuring that the correct number of inputs are provided 
 args <- commandArgs(trailingOnly = TRUE)
 
-# check for positional argument for the confidence interval method
-# options are loess (default), or binom confint (-c binom)
+## check for positional arguments 
+
+# -c flag for selecting confidence interval method, options are loess (default), or binom confint (-c binom)
 ci_method <- "loess"
 if ("-c" %in% args) {
   index <- which(args == "-c")
@@ -12,12 +13,20 @@ if ("-c" %in% args) {
   args <- args[-c(index, index + 1)]  # Remove the flag and its value from the args
 }
 
-# check for optional -o flag for output path
+# -o, optional output of processed data table 
 output_path <- NULL
 if ("-o" %in% args) {
   index <- which(args == "-o")
   output_path <- args[index + 1]
   args <- args[-c(index, index + 1)]  # Remove the flag and its value from the args
+}
+
+# -l flag for adding metagene labels to the plot (default: NO)
+add_labels <- FALSE
+if ("-l" %in% args) {
+  add_labels <- TRUE
+  index <- which(args == "-l")
+  args <- args[-index]  # Remove the flag from the args
 }
 
 # Check number of positional arguments
@@ -93,7 +102,7 @@ compute_ratio <- function(calls, ci_method) {
 
 
 # define function to generate plot of proportion of significant sites across metatranscript bins 
-plot_ratio <- function(out_ratio, ci_method) {
+plot_ratio <- function(out_ratio, ci_method, add_labels) {
   p <- ggplot(out_ratio, aes(x = interval, y = ratio)) +
     geom_point(alpha = 0.5, color = "red") +
     geom_vline(xintercept = c(80, 40), col = "black") +
@@ -104,17 +113,35 @@ plot_ratio <- function(out_ratio, ci_method) {
     xlab("Relative metatranscriptomic location") + ylab("Proportion of significant sites") +
     coord_cartesian(xlim = c(0, 120))
   
+  if (add_labels) {
+    # Add labels
+    x_positions <- seq(0, max(out_ratio$interval), length.out = 7)
+    y_position <- if ("upper" %in% names(out_ratio)) {
+      0.95 * max(out_ratio$upper)
+    } else {
+      1.03 * max(out_ratio$ratio)
+    }
+    p <- p +
+      geom_text(label = "5' UTR", x = x_positions[2], y = y_position, vjust = -0.5, size = 10) +
+      geom_text(label = "CDS", x = x_positions[4], y = y_position, vjust = -0.5, size = 10) +
+      geom_text(label = "3'UTR", x = x_positions[6], y = y_position, vjust = -0.5, size = 10)
+    
+    # extend the y-axis to include y_position
+    p <- p + coord_cartesian(xlim = c(0, 120), ylim = c(0, 1.03*y_position))
+  }
+  
   if (ci_method == "binom") {
-    # Include binom confidence intervals and a smoothed line without its own CIs
+    # include binom confidence intervals and a smoothed line without its own CIs
     p <- p + geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2) +
       geom_smooth(span = 0.2, color = "red", se = FALSE)
   } else {
-    # Include smoothed line with its own CIs
+    # include smoothed line with its own CIs
     p <- p + geom_smooth(span = 0.2, color = "red", se = TRUE)
   }
   
   return(p)
 }
+
 
 # define the significant sites 
 calls <- filter_calls(input_file, col_name, cutoff, direction)
@@ -132,7 +159,7 @@ if (!is.null(output_path)) {
 }
 
 # plot the ratio of significant sites at each metatranscript bin 
-p <- plot_ratio(out_ratio, ci_method)
+p <- plot_ratio(out_ratio, ci_method, add_labels)
 
 # save the plot
 ggsave(output_file, p, scale = 4, width = 850, height = 750, units = c("px"))
