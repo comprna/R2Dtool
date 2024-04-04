@@ -1,3 +1,0 @@
-cargo:rerun-if-changed=build/main.rs
-cargo:rustc-env=TYPENUM_BUILD_CONSTS=/home/150/as7425/R2Dtool/R2Dtool_rust/target/release/build/typenum-1f88cbc51917df74/out/consts.rs
-cargo:rustc-env=TYPENUM_BUILD_OP=/home/150/as7425/R2Dtool/R2Dtool_rust/target/release/build/typenum-1f88cbc51917df74/out/op.rs

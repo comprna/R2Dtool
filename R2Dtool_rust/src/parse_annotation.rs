@@ -22,6 +22,8 @@ pub struct Exon {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Transcript {
     pub transcript_id: String,
+    pub gene_id: Option<String>, // Add gene_id field
+    pub gene_name: Option<String>, // Add gene_name field
     pub utr5_len: Option<u64>,
     pub cds_len: Option<u64>,
     pub utr3_len: Option<u64>,
@@ -30,7 +32,7 @@ pub struct Transcript {
     pub biotype: Option<String>,
     pub splice_junction_positions: Vec<u64>,
     pub strand: Option<String>,
-    pub chromosome: String, // Add this line
+    pub chromosome: String,
 }
 
 // Default trait for transript structure
@@ -38,6 +40,8 @@ impl Default for Transcript {
     fn default() -> Self {
         Self {
             transcript_id: String::new(),
+            gene_id: None, // Add gene_id default
+            gene_name: None, // Add gene_name default
             utr5_len: None,
             cds_len: None,
             utr3_len: None,
@@ -46,7 +50,7 @@ impl Default for Transcript {
             biotype: None,
             splice_junction_positions: Vec::new(),
             strand: None,
-            chromosome: String::new(), // Add this line
+            chromosome: String::new(),
         }
     }
 }
@@ -54,16 +58,13 @@ impl Default for Transcript {
 // Read the gtf file; create a HashMap<String, Transcript>, each key (a String) will map to a single Transcript object.
 // each transcript has up to several exon objects stored in the exons field, which is a vector of Exon structs.
 pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
-    // create an empty hashmap, transcripts
     let mut transcripts: HashMap<String, Transcript> = HashMap::new();
 
-    // initialize the reader
-    let mut reader = gff::Reader::from_file(gtf_file, gff::GffType::GTF2).unwrap();
+    let mut reader = gff::Reader::from_file(gtf_file, gff::GffType::GTF2)
+        .expect("Unable to open the gtf file");
 
-    // define possible keys of the biotype; includes Ensembl, gencode, flybase, pombase, (others?)
     let biotype_keys = vec!["transcript_biotype", "transcript_type", "gene_type"];
 
-    // slice the biotype, if it exists
     fn find_biotype(attributes: &HashMap<String, String>, keys: &[&str]) -> Option<String> {
         for key in keys {
             if let Some(value) = attributes.get(*key) {
@@ -73,86 +74,102 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
         None
     }
 
-    // make an empty hashset to print encountered transcripts
     let mut encountered_transcripts: HashSet<String> = HashSet::new();
 
-    // loop over the records of the gtf file
     for record in reader.records() {
-
-        let record = record.unwrap();
+        let record = match record {
+            Ok(record) => record,
+            Err(err) => {
+                eprintln!("Error reading record: {}", err);
+                continue;
+            }
+        };
 
         if record.feature_type() == "#" {
-            continue; // skip header records if present
+            continue;
         }
 
-        let attributes = parse_gff_attributes(record.attributes()); //parse attibutes
-        if let Some(transcript_id_with_version) = attributes.get("transcript_id") {
-            let transcript_id = transcript_id_with_version.split('.').next().unwrap().to_string(); // Remove version from transcript ID
-            let transcript = transcripts.entry(transcript_id.clone()).or_insert_with(|| {
-                let biotype = find_biotype(&attributes, &biotype_keys);
-                let strand = record.strand().expect("Missing strand information").strand_symbol().to_string(); // Get strand for transcript
-                let chromosome = record.seqname().to_string(); // Define chromosome here <-- ADD THIS LINE
-                Transcript {
-                    transcript_id: transcript_id.clone(),
-                    utr5_len: None,
-                    cds_len: None,
-                    utr3_len: None,
-                    has_missing_features: false,
-                    exons: Vec::new(),
-                    biotype,
-                    splice_junction_positions: Vec::new(),
-                    strand: Some(strand),
-                    chromosome,
-                }
-            });
+        let attributes = parse_gff_attributes(record.attributes());
 
-            // calculate feature length
-            let feature_length = (*record.end() - *record.start() + 1) as u64;
+        let transcript_id_with_version = match attributes.get("transcript_id") {
+            Some(id) => id,
+            None => {
+                eprintln!(
+                    "Error: Missing 'transcript_id' in record: {:?}. Skipping...",
+                    record
+                );
+                continue;
+            }
+        };
+        let transcript_id = transcript_id_with_version.split('.').next().unwrap().to_string();
 
-            // store exon properties, if an exon is found
-            match record.feature_type() {
-                "exon" => {
-                    let exon = Exon {
-                        seq_id: record.seqname().to_string(),
-                        source: record.source().to_string(),
-                        feature_type: record.feature_type().to_string(),
-                        start: *record.start(),
-                        end: *record.end(),
-                        score: record.score().map(|s| s as f64),
-                        strand: record.strand().expect("Missing strand information").strand_symbol().to_string(),
-                        frame: record.frame().chars().next(),
-                        attributes: attributes.clone(),
-                        feature: Some(record.feature_type().to_string()),
-                        length: feature_length,
-                    };
+        let transcript = transcripts.entry(transcript_id.clone()).or_insert_with(|| { // missing brace here
+            let biotype = find_biotype(&attributes, &biotype_keys);
+            let strand = record.strand().expect("Missing strand information").strand_symbol().to_string();
+            let chromosome = record.seqname().to_string();
+            let gene_id = attributes.get("gene_id").map(|s| s.to_string());
+            let gene_name = attributes.get("gene_name").map(|s| s.to_string());
+            Transcript {
+                transcript_id: transcript_id.clone(),
+                gene_id,
+                gene_name,
+                utr5_len: None,
+                cds_len: None,
+                utr3_len: None,
+                has_missing_features: false,
+                exons: Vec::new(),
+                biotype,
+                splice_junction_positions: Vec::new(),
+                strand: Some(strand),
+                chromosome,
+            }
+        }); // end missing brace
 
-                    // store the exon in the transcript
-                    transcript.exons.push(exon);
+        let feature_length = (*record.end() - *record.start() + 1) as u64;
+
+        match record.feature_type() {
+            "exon" => {
+                let exon = Exon {
+                    seq_id: record.seqname().to_string(),
+                    source: record.source().to_string(),
+                    feature_type: record.feature_type().to_string(),
+                    start: *record.start(),
+                    end: *record.end(),
+                    score: record.score().map(|s| s as f64),
+                    strand: record.strand().expect("Missing strand information").strand_symbol().to_string(),
+                    frame: record.frame().chars().next(),
+                    attributes: attributes.clone(),
+                    feature: Some(record.feature_type().to_string()),
+                    length: feature_length,
+                };
+                transcript.exons.push(exon);
+            }
+            "CDS" => {
+                transcript.cds_len = Some(transcript.cds_len.unwrap_or(0) + feature_length);
+            }
+            "five_prime_utr" | "5UTR" => {
+                transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature_length);
+            }
+            "three_prime_utr" | "3UTR" => {
+                transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature_length);
+            }
+            "transcript" => {
+                if !encountered_transcripts.insert(transcript_id.clone()) {
+                    eprintln!(
+                        "Warning: More than one transcript with the same name '{}' found. Please check the GTF file.",
+                        transcript_id
+                    );
                 }
-                "CDS" => {
-                    transcript.cds_len = Some(transcript.cds_len.unwrap_or(0) + feature_length);
-                }
-                "five_prime_utr" | "5UTR" => {
-                    transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature_length);
-                }
-                "three_prime_utr" | "3UTR" => {
-                    transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature_length);
-                }
-                "transcript" => {
-                    // check for duplicates
-                    if !encountered_transcripts.insert(transcript_id.clone()) {
-                        eprintln!(
-                            "Warning: More than one transcript with the same name '{}' found. Please check the GTF file.",
-                            transcript_id
-                        );
-                    }
-                }
-                _ => (),
+            }
+            other => {
+                eprintln!(
+                    "Warning: Unexpected feature type '{}' found. Please check the GTF file.",
+                    other
+                );
             }
         }
     }
 
-    // Safety check to ensure that all exons are on the same chromosome (PAR_Y case)
     transcripts.retain(|_, transcript| {
         let exon_seq_id = transcript.exons.get(0).map(|exon| &exon.seq_id);
         if let Some(exon_seq_id) = exon_seq_id {
@@ -162,7 +179,6 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
         }
     });
 
-    // splice positions
     for transcript in transcripts.values_mut() {
         transcript.exons.sort_by_key(|exon| exon.start);
 
@@ -174,13 +190,6 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
         }
     }
 
-    // check that the transcript length is consistent
-    // for transcript in transcripts.values() {
-    //     check_transcript_length(transcript);
-    // }
-
-    // check transcript count
-    // println!("Size of the transcripts hashmap: {}", transcripts.len()); // Add this line
     transcripts
 }
 
@@ -225,7 +234,7 @@ pub fn read_gff_file(gff_file: &str) -> HashMap<String, Transcript> {
                 score: record.score().map(|s| s as f64),
                 strand: record.strand().expect("Missing strand information").strand_symbol().to_string(),
                 frame: record.frame().chars().next(),
-                attributes: attributes,
+                attributes: attributes.clone(),
                 feature: Some(feature_type.to_string()),
                 length: (*record.end() - *record.start() + 1) as u64,
             };
@@ -248,14 +257,16 @@ pub fn read_gff_file(gff_file: &str) -> HashMap<String, Transcript> {
                     }
                 });
 
-
-
                 let transcript = transcripts.entry(transcript_id.clone()).or_insert_with(|| {
                     let biotype = find_biotype(&exon.attributes, &biotype_keys);
                     let strand = record.strand().expect("Missing strand information").strand_symbol().to_string(); // Get strand for transcript
                     let chromosome = record.seqname().to_string();
+                    let gene_id = attributes.get("gene_id").map(|s| s.to_string());
+                    let gene_name = attributes.get("gene_name").map(|s| s.to_string());
                     Transcript {
                         transcript_id: transcript_id.clone(),
+                        gene_id,
+                        gene_name,
                         utr5_len: None,
                         cds_len: None,
                         utr3_len: None,
@@ -297,20 +308,6 @@ pub fn parse_gff_attributes(attributes: &MultiMap<String, String>) -> HashMap<St
     }
     attr_map
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // safety code
 

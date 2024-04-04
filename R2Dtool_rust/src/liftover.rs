@@ -7,6 +7,7 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
     site_fields: &[&str], // input: tab-separated transcriptome position fields
     annotations: &HashMap<String, Transcript>, // input: parsed annotation object
 ) -> Option<String> { // return type: Option<String), either Some(String) or None
+    
     // Check if there are at least 4 fields in site_fields
     if site_fields.len() < 4 {
         return None; // If not, return None
@@ -14,6 +15,7 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
 
     // Extract the transcript ID with version from the first field
     let transcript_id_with_version = site_fields[0];
+
     // Remove the version from transcript ID
     let transcript_id = transcript_id_with_version.split('.').next().unwrap();
 
@@ -71,15 +73,16 @@ pub fn run_liftover(matches: &clap::ArgMatches) {
     let output_file = matches.value_of("output");
     let format = matches.value_of("format").unwrap_or("gff");
 
-    let annotations = if format == "gtf" {
-        read_gtf_file(gff_file)
-    } else {
+    let annotations = if format == "gff" {
         read_gff_file(gff_file)
+    } else {
+        read_gtf_file(gff_file)
     };
 
     // Print the annotations in a table
-    // preview_annotations(&annotations);
-    // std::process::exit(0);
+    eprintln!("Previewing transcript annotations\n");
+    preview_annotations(&annotations);
+    std::process::exit(0);
 
     let has_header = matches.is_present("header");
 
@@ -120,15 +123,15 @@ pub fn run_liftover(matches: &clap::ArgMatches) {
     }
 }
 
-// pub fn preview_annotations(annotations: &HashMap<String, Transcript>) {
-//     println!("Number of annotations: {}", annotations.len()); // Add this line
-//     for (key, transcript) in annotations {
-//         println!("Annotations start");
-//         println!("Transcript ID: {}", key);
-//         println!("{:#?}", transcript);
-//         println!("Annotations end");
-//     }
-// }
+pub fn preview_annotations(annotations: &HashMap<String, Transcript>) {
+    println!("Number of annotations: {}", annotations.len()); // Add this line
+    for (key, transcript) in annotations {
+        println!("Annotations start");
+        println!("Transcript ID: {}", key);
+        println!("{:#?}", transcript);
+        println!("Annotations end");
+    }
+}
 
 pub fn print_exon_info(annotations: &HashMap<String, Transcript>) {
     for (key, transcript) in annotations {

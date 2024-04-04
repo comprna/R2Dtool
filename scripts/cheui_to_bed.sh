@@ -23,7 +23,7 @@ printf "transcript\tstart\tend\tname\tscore\tstrand\tmotif\tcoverage\tstoichiome
 # cat ${cheui_model_ii_output} | tail -n +2 | tr "_" "\t" | awk '{ print $1"\t"$2+4"\t"$2+5"\t"$2+4";"$3";"$4";"$5";"$6"\t.\t+"}' >> "${bedlike_cheui_model_ii_output}" || printf "[cheui-to-bed] $(date) ..... [error] conversion for ${cheui_model_ii_output} failed!\n"
 
 # new code adds additional data to columns 7+
-cat ${cheui_model_ii_output} | tail -n +2 | tr "_" "\t" | awk '{ print $1"\t"$2+4"\t"$2+5"\t.\t.\t+\t"$3"\t"$4"\t"$5"\t"$6}' >> "${bedlike_cheui_model_ii_output}" || printf "[cheui-to-bed] $(date) ..... [error] conversion for ${cheui_model_ii_output} failed!\n"
+cat ${cheui_model_ii_output} | tail -n +2 | awk 'BEGIN{OFS="\t"} {if (NF>1) {$2=gensub("_", "\t", "g", $2); $1=$1} print}' | awk '{ print $1"\t"$2+4"\t"$2+5"\t.\t.\t+\t"$3"\t"$4"\t"$5"\t"$6}' >> "${bedlike_cheui_model_ii_output}" || printf "[cheui-to-bed] $(date) ..... [error] conversion for ${cheui_model_ii_output} failed!\n"
 
 # check word count
 count=$(cat "${bedlike_cheui_model_ii_output}" | wc -l | xargs)
