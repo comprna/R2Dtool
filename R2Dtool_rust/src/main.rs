@@ -1,5 +1,5 @@
 #![allow(non_snake_case)]
-use clap::{App, Arg, SubCommand};
+use clap::{Arg,Command};
 
 // modules
 pub mod parse_annotation;
@@ -7,98 +7,88 @@ pub mod annotate;
 pub mod liftover;
 
 fn main() {
-    let matches = App::new("R2Dtool")
-        .version("0.1.0")
-        .author("Your Name <your.email@example.com>")
-        .about("R2Dtool in Rust")
+    let matches = Command::new("R2Dtool")
+        .version("1.0.0")
+        .author("AJ Sethi, compRNA <aditya.sethi@anu.edu.au; CompRNA@ANU365.onmicrosoft.com>")
+        .about("R2Dtool")
         .subcommand(
-            SubCommand::with_name("liftover")
+            Command::new("liftover")
                 .about("Converts transcriptomic to genomic coordinates")
                 .arg(
-                    Arg::with_name("gff")
-                    .short("g")
+                    Arg::new("gff")
+                    .short('g')
                     .long("gff")
                     .value_name("GFF_FILE")
                     .help("Path to gene structure annotation")
                     .required(true)
-                    .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name("input")
-                    .short("i")
+                    Arg::new("input")
+                    .short('i')
                     .long("input")
                     .value_name("INPUT_FILE")
                     .help("Path to input file with transcriptomic coordinates")
                     .required(true)
-                    .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name("header")
-                    .short("H")
+                    Arg::new("header")
+                    .short('H')
                     .long("header")
                     .help("Indicates that the input file has a header in line 1")
-                    .takes_value(false),
                 )
                 .arg(
-                    Arg::with_name("output")
-                    .short("o")
+                    Arg::new("output")
+                    .short('o')
                     .long("output")
                     .value_name("OUTPUT_FILE")
                     .help("Path to output file")
-                    .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name("format")
-                    .short("f")
+                    Arg::new("format")
+                    .short('f')
                     .long("format")
                     .value_name("FORMAT")
                     .help("Specify the gene strutcture annotation format: gtf or gff (default: gff)")
-                    .takes_value(true),
                 )
         )
         .subcommand(
-            SubCommand::with_name("annotate")
+            Command::new("Annotate")
                 .about("Annotates transcriptomic sites")
                 .arg(
-                    Arg::with_name("gff")
-                    .short("g")
+                    Arg::new("gff")
+                    .short('g')
                     .long("gff")
                     .value_name("GFF_FILE")
                     .help("Path to gene structure annotation")
                     .required(true)
-                    .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name("input")
-                    .short("i")
+                    Arg::new("input transcriptome-mapped sites")
+                    .short('i')
                     .long("input")
                     .value_name("INPUT_FILE")
                     .help("Path to input file with transcriptomic coordinates")
                     .required(true)
-                    .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name("header")
-                    .short("H")
+                    Arg::new("header")
+                    .short('H')
                     .long("header")
                     .help("Indicates that the input file has a header in line 1")
-                    .takes_value(false),
                 )
                 .arg(
-                    Arg::with_name("output")
-                    .short("o")
+                    Arg::new("output")
+                    .short('o')
                     .long("output")
                     .value_name("OUTPUT_FILE")
                     .help("Path to output file")
-                    .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name("format")
-                    .short("f")
+                    Arg::new("format")
+                    .short('f')
                     .long("format")
                     .value_name("FORMAT")
                     .help("Specify the gene strutcture annotation format: gtf or gff (default: gff)")
-                    .takes_value(true),
                 )
         )
         .get_matches();
@@ -126,7 +116,7 @@ fn main() {
 //     .author("Your Name your.email@example.com")
 //     .about("Converts transcriptomic coordinates to genomic coordinates")
 //     .arg(
-//         Arg::with_name("gff")
+//         Arg::new("gff")
 //         .short("g")
 //         .long("gff")
 //         .value_name("GFF_FILE")
@@ -135,7 +125,7 @@ fn main() {
 //         .takes_value(true),
 //     )
 //     .arg(
-//         Arg::with_name("input")
+//         Arg::new("input")
 //         .short("i")
 //         .long("input")
 //         .value_name("INPUT_FILE")
@@ -144,14 +134,14 @@ fn main() {
 //         .takes_value(true),
 //     )
 //     .arg(
-//         Arg::with_name("header")
+//         Arg::new("header")
 //         .short("H")
 //         .long("header")
 //         .help("Indicates that the input file has a header in line 1")
 //         .takes_value(false),
 //     )
 //     .arg(
-//         Arg::with_name("output")
+//         Arg::new("output")
 //         .short("o")
 //         .long("output")
 //         .value_name("OUTPUT_FILE")
@@ -159,7 +149,7 @@ fn main() {
 //         .takes_value(true),
 //     )
 //     .arg(
-//         Arg::with_name("format")
+//         Arg::new("format")
 //         .short("f")
 //         .long("format")
 //         .value_name("FORMAT")
@@ -167,7 +157,7 @@ fn main() {
 //         .takes_value(true),
 //     )
 //     .arg(
-//         Arg::with_name("subcommand")
+//         Arg::new("subcommand")
 //         .help("Subcommand to run: liftover or annotate")
 //         .required(true)
 //         .index(1),

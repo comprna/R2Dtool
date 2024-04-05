@@ -68,25 +68,26 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
 }
 
 pub fn run_liftover(matches: &clap::ArgMatches) {
-    let gff_file = matches.value_of("gff").unwrap();
-    let input_file = matches.value_of("input").unwrap();
-    let output_file = matches.value_of("output");
-    let format = matches.value_of("format").unwrap_or("gff");
+    let default_format = String::from("gff");
+    let format = matches.get_one("format").unwrap_or(&default_format);
+
+    let gff_file: String = matches.get_one::<String>("gff").unwrap().to_string();
+    let input_file: String = matches.get_one::<String>("input").unwrap().to_string();
+    let output_file: Option<String> = matches.get_one::<String>("output").map(|s: &String| s.to_string());
 
     let annotations = if format == "gff" {
-        read_gff_file(gff_file)
+        read_gff_file(&gff_file)
     } else {
-        read_gtf_file(gff_file)
+        read_gtf_file(&gff_file)
     };
 
     // Print the annotations in a table
     eprintln!("Previewing transcript annotations\n");
     preview_annotations(&annotations);
-    std::process::exit(0);
 
-    let has_header = matches.is_present("header");
+    let has_header = matches.contains_id("header");
 
-    let mut input_reader = BufReader::new(File::open(input_file).unwrap());
+    let mut input_reader = BufReader::new(File::open(input_file.clone()).unwrap_or_else(|_| panic!("Cannot open input file: {}", input_file)));
 
     let mut output_writer: Box<dyn Write> = match output_file {
         Some(file_name) => Box::new(File::create(file_name).unwrap()),

@@ -105,3 +105,11 @@ module load R
 
 cargo build --release && time ./target/release/R2Dtool_rust annotate -f gtf -H -g ../test/GRCm39_subset.gtf -i ../test/out_CHEUI_modelII.bed | head
 time Rscript ../scripts/R2_annotate.R "../test/out_CHEUI_modelII.bed" "../test/GRCm39_subset.gtf" "./test_out.txt"
+
+
+
+#########
+
+# testing 2024/04/05
+cd /home/150/as7425/R2Dtool/R2Dtool_rust
+cargo build --release --future-incompat-report

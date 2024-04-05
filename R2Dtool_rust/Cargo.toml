@@ -1,11 +1,12 @@
 [package]
 name = "R2Dtool_rust"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bio = "0.38.0"
-clap = "2.33.3"
-multimap = "0.8.3"
+nalgebra = "0.32.4"
+bio = "1.6.0"
+clap = "4.5.4"
+multimap = "0.9.1"

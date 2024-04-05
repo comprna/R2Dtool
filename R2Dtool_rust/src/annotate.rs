@@ -98,21 +98,24 @@ fn splice_site_distances(tx_coord: u64, splice_sites: &[SpliceSite]) -> (Option<
 pub fn run_annotate(matches: &clap::ArgMatches) {
     println!("Running the annotate functionality...");
 
-    let gff_file = matches.value_of("gff").unwrap();
-    let input_file = matches.value_of("input").unwrap();
-    let output_file = matches.value_of("output");
-    let format = matches.value_of("format").unwrap_or("gtf");
+    let default_format = String::from("gtf");
+    let format = matches.get_one("format").unwrap_or(&default_format);
+
+    let gff_file: String = matches.get_one::<String>("gff").unwrap().to_string();
+    let input_file: String = matches.get_one::<String>("input").unwrap().to_string();
+    let output_file: Option<String> = matches.get_one::<String>("output").map(|s: &String| s.to_string());
 
     let annotations = if format == "gtf" {
-        read_gtf_file(gff_file)
+        read_gtf_file(&gff_file)
     } else {
-        read_gff_file(gff_file)
+        read_gff_file(&gff_file)
     };
 
     let transcripts = annotations;
 
-    let mut input_reader = BufReader::new(File::open(input_file).unwrap_or_else(|_| panic!("Cannot open input file: {}", input_file)));
-    let has_header = matches.is_present("header");
+    let mut input_reader = BufReader::new(File::open(input_file.clone()).unwrap_or_else(|_| panic!("Cannot open input file: {}", input_file)));
+
+    let has_header = matches.contains_id("header");
 
     let mut output_writer: Box<dyn Write> = match output_file {
         Some(file) => Box::new(File::create(file).expect("Cannot create output file")),
@@ -120,6 +123,7 @@ pub fn run_annotate(matches: &clap::ArgMatches) {
     };
 
     let splice_sites = generate_splice_sites(&transcripts);
+
     let mut header = String::new();
     if has_header {
         input_reader.read_line(&mut header).unwrap();
