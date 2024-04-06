@@ -66,7 +66,7 @@ fn main() {
                     .required(true)
                 )
                 .arg(
-                    Arg::new("input transcriptome-mapped sites")
+                    Arg::new("input")
                     .short('i')
                     .long("input")
                     .value_name("INPUT_FILE")

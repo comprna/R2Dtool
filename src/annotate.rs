@@ -5,8 +5,6 @@ use std::collections::HashMap;
 use crate::parse_gtf::{Transcript, read_annotation_file};
 
 
-
-
 #[derive(Debug, Clone)]
 pub struct SpliceSite {
     pub transcript_id: String,
@@ -100,17 +98,17 @@ fn splice_site_distances(tx_coord: u64, splice_sites: &[SpliceSite]) -> (Option<
 }
 
 pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), Box<dyn Error>> {
+   
     println!("Running the annotate functionality...");
-
-    // let default_format = String::from("gtf");
-    // let format = matches.get_one("format").unwrap_or(&default_format);
-
+   
     let gtf_file: String = matches.get_one::<String>("gtf").unwrap().to_string();
     let input_file: String = matches.get_one::<String>("input").unwrap().to_string();
     let output_file: Option<String> = matches.get_one::<String>("output").map(|s: &String| s.to_string());
 
     // By default, read in the annotations as GTF file
-    // TODO: implement GFF3 parsing 
+    // TODO: implement GFF3 parsing         
+    // let default_format = String::from("gtf");
+    // let format = matches.get_one("format").unwrap_or(&default_format);
     let annotations = read_annotation_file(&gtf_file, true)?;
 
     let transcripts = annotations;

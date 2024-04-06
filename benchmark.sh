@@ -136,4 +136,8 @@ time ./target/release/r2d annotate -f gtf -H -g ../test/GRCm39_subset.gtf -i ../
 time ./target/release/r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed | more
 
 # R2Dtool
+export RUST_BACKTRACE=1
+cargo build --release --future-incompat-report
+
+
 time ./target/release/r2d annotate -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed | more
