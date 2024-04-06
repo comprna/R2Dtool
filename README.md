@@ -144,12 +144,13 @@ mkdir ./test/outputs/ 2>/dev/null
 r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
 
 # annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype
-
 r2d annotate -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/annotate.bed
 
-# liftover sites after annotating them
-r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/outputs/annotate.bed > ./test/outputs/liftover_annotate.bed
+# make metatranscript plot using annotated sites 
+Rscript /home/150/as7425/R2Dtool/scripts/R2_plotMetaTranscript.R "./test/outputs/annotate.bed" "./test/outputs/metagene.png" "probability" "0.9999" "upper"
 
+# make metajunction plot using annotated sites 
+Rscript /home/150/as7425/R2Dtool/scripts/R2_plotMetaJunction.R "./test/outputs/annotate.bed" "./test/outputs/metagene.png" "probability" "0.9999" "upper"
 ```
 
 > Test data was generated using [cheui](https://github.com/comprna/CHEUI) and converted to bed-like coordinates using [R2Dtool utilities](https://github.com/comprna/R2Dtool/blob/main/scripts/cheui_to_bed.sh).
