@@ -136,15 +136,14 @@ export PATH="$PATH:$(pwd)/target/release"
 #### Testing R2Dtool installation 
 
 ```
-
 cd R2Dtool && export PATH="$PATH:$(pwd)/target/release/"
+mkdir ./test/outputs/ 2>/dev/null
 
 # liftover transcriptomic sites to genomic coordinates
-r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/liftover.bed
+r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
 
 
 # annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype
-
 
 
 r2d lift ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed

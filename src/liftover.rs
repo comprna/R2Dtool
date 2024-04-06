@@ -37,28 +37,37 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
 
         // Iterate through each exon in the transcript
         for exon_data in &exons {
+
             // Calculate the exon length
             let exon_length = exon_data.end - exon_data.start + 1;
+
             // Check if the current exon contains the transcriptomic position
-            if current_position + exon_length >= position {
+
+            if current_position + exon_length > position {
+
                 // Calculate the genomic position based on the strand
                 let genomic_position = if transcript.strand.as_deref() == Some("+") {
                     position - current_position + exon_data.start - 1
                 } else {
                     exon_data.end - (position - current_position + 2) + 1
                 };
+
                 // Get the chromosome name
                 let chrom = &transcript.chromosome;
+
                 // Get the genomic strand
                 let genomic_strand = &transcript.strand;
+
                 // Join the additional columns (fields after the second one) using a tab character
                 let additional_columns = site_fields[2..].join("\t");
+
                 // Return the formatted output string
                 return Some(format!(
                     "{}\t{}\t{}\t\t\t{}\t{}\t{}",
                     chrom, genomic_position, genomic_position + 1, genomic_strand.as_deref().unwrap_or(""), site_fields[0], additional_columns
                 ));
             }
+
             // Increment the current_position by the exon_length
             current_position += exon_length;
         }

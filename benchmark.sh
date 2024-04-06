@@ -158,11 +158,11 @@ cargo build --release
 
 # compile from source and run liftover
 cd R2Dtool 
-caro build --release 
+cargo build --release 
 export PATH="$PATH:$(pwd)/target/release/"
 
 # liftover transcriptomic sites to genomic coordinates
-mkdir ./test/outputs/
+mkdir ./test/outputs/ 2>/dev/null
 r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
 
 # make a 6-col bedfile without header for bedtools
@@ -173,11 +173,12 @@ export genome="/g/data/lf10/as7425/genomes/mouse_genome/GRCm39/Mus_musculus.GRCm
 bedtools getfasta -s -fi ${genome} -bed ./test/outputs/liftover.bed6 | tail -n +2 | awk 'NR%2==1' | sort | uniq -c | sort -nr > ./test/outputs/liftover_sequence_context.txt
 cat ./test/outputs/liftover_sequence_context.txt
 
-# check non-A sites 
-bedtools getfasta -s -fi ${genome} -bed ./test/outputs/liftover.bed6 > ./test/outputs/all_sequence_context.txt
-grep -B 1 "G" ./test/outputs/all_sequence_context.txt 
+# All sites return as A 
 
+# check input site counts 
+tail -n +2 ./test/out_CHEUI_modelII.bed | wc -l
 
-rm  -rf test_input
+# check output site counts
+tail -n +2 ./test/outputs/liftover.bed| wc -l
 
-///
+rm -rf ./test/outputs/
