@@ -120,16 +120,19 @@ export RUST_LOG=debug
 cargo test -- --nocapture 
 
 
+
+cd /home/150/as7425/R2Dtool/
 rm -rf target
-
-
 cargo build --release --future-incompat-report
 
 
+time ./target/release/r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed 
 
 
 
-time ./target/release/r2d annotate -f gtf -H -g ../test/GRCm39_subset.gtf -i ../test/out_CHEUI_modelII.bed | head
+
+
+time ./target/release/r2d annotate -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed | head
 
 
 # R2Dtool
