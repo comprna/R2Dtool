@@ -77,6 +77,7 @@ transcript_biotype | gene_name | gene_id | tx_len | cds_len | utr5_len | utr3_le
 > [!NOTE]
 > - ```liftover``` and ```annotate``` requires columns 1-6 to contain feature coordinates against a transcriptome reference
 > - ```annotate``` can be perfomed before, but __not__ after, ```liftover```
+> - ```annotate``` requires protein-coding gene models in order to calculate feature metacoordinates and distances to CDS starts and ends 
 > - The GTF file used must exactly match the transcriptome to which features are mapped 
 
 ## Visualising isoform-aware RNA feature metadistributions
@@ -142,11 +143,13 @@ mkdir ./test/outputs/ 2>/dev/null
 # liftover transcriptomic sites to genomic coordinates
 r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
 
-
 # annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype
 
+r2d annotate -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/annotate.bed
 
-r2d lift ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed
+# liftover sites after annotating them
+r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/outputs/annotate.bed > ./test/outputs/liftover_annotate.bed
+
 ```
 
 > Test data was generated using [cheui](https://github.com/comprna/CHEUI) and converted to bed-like coordinates using [R2Dtool utilities](https://github.com/comprna/R2Dtool/blob/main/scripts/cheui_to_bed.sh).

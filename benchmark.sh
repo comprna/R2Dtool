@@ -182,3 +182,20 @@ tail -n +2 ./test/out_CHEUI_modelII.bed | wc -l
 tail -n +2 ./test/outputs/liftover.bed| wc -l
 
 rm -rf ./test/outputs/
+rm -rf ~/R2Dtool/target
+
+##########
+
+# compile from source and run liftover
+cd ~/R2Dtool 
+cargo build --release 
+export PATH="$PATH:$(pwd)/target/release/"
+
+# liftover transcriptomic sites to genomic coordinates
+mkdir ./test/outputs/ 2>/dev/null
+time r2d annotate -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/annotate_all.txt 
+
+grep -A 20 -B 20 "ENSMUST00000124002.2" ./test/outputs/annotate_all.txt | more
+
+# no gene info for 
+ENSMUST00000124002.2

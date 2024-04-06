@@ -99,7 +99,7 @@ fn splice_site_distances(tx_coord: u64, splice_sites: &[SpliceSite]) -> (Option<
 
 pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), Box<dyn Error>> {
    
-    println!("Running the annotate functionality...");
+    eprintln!("Running the annotate functionality...");
    
     let gtf_file: String = matches.get_one::<String>("gtf").unwrap().to_string();
     let input_file: String = matches.get_one::<String>("input").unwrap().to_string();
@@ -110,6 +110,10 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
     // let default_format = String::from("gtf");
     // let format = matches.get_one("format").unwrap_or(&default_format);
     let annotations = read_annotation_file(&gtf_file, true)?;
+    
+    // Print the annotations in a table
+    // eprintln!("Previewing transcript annotations\n");
+    // preview_annotations(&annotations);
 
     let transcripts = annotations;
 
@@ -140,53 +144,80 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
         let transcript_id_with_version = fields[0];
         let transcript_id = transcript_id_with_version.split('.').next().unwrap();
         let tx_coord: u64 = fields[1].parse().unwrap();
-
+    
         if let Some(transcript) = transcripts.get(transcript_id) {
+            
+            // Initialize all fields to "NA"
+            let mut tx_len = "NA".to_string();
+            let mut cds_start = "NA".to_string();
+            let mut cds_end = "NA".to_string();
+            let mut tx_end = "NA".to_string();
+            let mut rel_pos = "NA".to_string();
+            let mut abs_cds_start = "NA".to_string();
+            let mut abs_cds_end = "NA".to_string();
+            let mut up_junc_dist = "NA".to_string();
+            let mut down_junc_dist = "NA".to_string(); 
+        
+            // Always populate gene_id, gene_name, and biotype if available
+            let gene_id = transcript.gene_id.clone().unwrap_or_else(|| "NA".to_string());
+            let gene_name = transcript.gene_name.clone().unwrap_or_else(|| "NA".to_string());
+            let biotype = transcript.biotype.clone().unwrap_or_else(|| "NA".to_string());
+    
+            // Calculate transcript length if possible
             if let (Some(utr5_len), Some(cds_len), Some(utr3_len)) = (transcript.utr5_len, transcript.cds_len, transcript.utr3_len) {
-                let tx_len = calculate_tx_len(utr5_len, cds_len, utr3_len);
-                let cds_start = calculate_cds_start(utr5_len);
-                let cds_end = calculate_cds_end(utr5_len, cds_len);
-                let tx_end = calculate_tx_end(utr5_len, cds_len, utr3_len);
-
-                let (rel_pos, abs_cds_start, abs_cds_end) = calculate_meta_coordinates(tx_coord, utr5_len, cds_len, utr3_len);
-
-                if let Some(splice_sites) = splice_sites.get(transcript_id) {
-                    let (up_junc_dist, down_junc_dist) = splice_site_distances(tx_coord, splice_sites);
-
-                    let output_line = format!(
-    "{}\t{}\t{}\t{}\t{}\t{}\t{:.5}\t{}\t{}\t{}\t{}\t{}\t{}",
-    line,
-    transcript.gene_id.clone().unwrap_or_else(|| "NA".to_string()),
-    transcript.gene_name.clone().unwrap_or_else(|| "NA".to_string()),
-    transcript.biotype.clone().unwrap_or_else(|| "NA".to_string()),
-    tx_len,
-    cds_start,
-    cds_end,
-    tx_end,
-    format!("{:.5}", rel_pos),
-    abs_cds_start,
-    abs_cds_end,
-    up_junc_dist.map_or("NA".to_string(), |x| x.to_string()),
-    down_junc_dist.map_or("NA".to_string(), |x| x.to_string())
-);
-                    if let Err(_) = writeln!(output_writer, "{}", output_line) {
-                        break;
-                    }
-                } else {
-                    if let Err(_) = writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line) {
-                        break;
-                    }
-                }
-            } else {
-                if let Err(_) = writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line) {
-                    break;
-                }
+                tx_len = calculate_tx_len(utr5_len, cds_len, utr3_len).to_string();
+                cds_start = calculate_cds_start(utr5_len).to_string();
+                cds_end = calculate_cds_end(utr5_len, cds_len).to_string();
+                tx_end = calculate_tx_end(utr5_len, cds_len, utr3_len).to_string();
+                let calculated_values = calculate_meta_coordinates(tx_coord, utr5_len, cds_len, utr3_len);
+                rel_pos = format!("{:.5}", calculated_values.0);
+                abs_cds_start = calculated_values.1.to_string();
+                abs_cds_end = calculated_values.2.to_string();
+            }
+    
+            // Handle splice sites if available
+            if let Some(splice_sites) = splice_sites.get(transcript_id) {
+                let calculated_distances = splice_site_distances(tx_coord, splice_sites);
+                up_junc_dist = calculated_distances.0.map_or("NA".to_string(), |x| x.to_string());
+                down_junc_dist = calculated_distances.1.map_or("NA".to_string(), |x| x.to_string());
+            }
+    
+            // Construct and write the output line
+            let output_line = format!(
+                "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+                line,
+                gene_id,
+                gene_name,
+                biotype,
+                tx_len,
+                cds_start,
+                cds_end,
+                tx_end,
+                rel_pos,
+                abs_cds_start,
+                abs_cds_end,
+                up_junc_dist,
+                down_junc_dist
+            );
+            if let Err(_) = writeln!(output_writer, "{}", output_line) {
+                break;
             }
         } else {
-            if let Err(_) = writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line) {
+            // Handle the case where no transcript data is found
+            if let Err(_) = writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line) {
                 break;
             }
         }
-    }
+    }    
     Ok(())
+}
+
+pub fn preview_annotations(annotations: &HashMap<String, Transcript>) {
+    println!("Number of annotations: {}", annotations.len()); // Add this line
+    for (key, transcript) in annotations {
+        println!("Annotations start");
+        println!("Transcript ID: {}", key);
+        println!("{:#?}", transcript);
+        println!("Annotations end");
+    }
 }
