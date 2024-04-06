@@ -133,4 +133,7 @@ time ./target/release/r2d annotate -f gtf -H -g ../test/GRCm39_subset.gtf -i ../
 
 
 # R2Dtool
-time ./target/release/r2d liftover -f gtf -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed | more
+time ./target/release/r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed | more
+
+# R2Dtool
+time ./target/release/r2d annotate -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed | more

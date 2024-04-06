@@ -69,7 +69,7 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
     None
 }
 
-pub fn run_liftover(matches: &clap::ArgMatches) -> Result<(), Box<dyn Error>> {
+pub fn run_liftover(matches: &clap::ArgMatches, has_header: bool) -> Result<(), Box<dyn Error>> {
 
     // TODO: implement format matching for GFF3 file parsing 
     // let default_format = String::from("gtf");
@@ -84,10 +84,8 @@ pub fn run_liftover(matches: &clap::ArgMatches) -> Result<(), Box<dyn Error>> {
     let annotations = read_annotation_file(&gtf_file, true)?;
 
     // Print the annotations in a table
-    eprintln!("Previewing transcript annotations\n");
-    preview_annotations(&annotations);
-
-    let has_header = matches.contains_id("header");
+    // eprintln!("Previewing transcript annotations\n");
+    // preview_annotations(&annotations);
 
     let mut input_reader = BufReader::new(File::open(input_file.clone()).unwrap_or_else(|_| panic!("Cannot open input file: {}", input_file)));
 

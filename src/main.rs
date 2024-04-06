@@ -37,6 +37,7 @@ fn main() {
                     .short('H')
                     .long("header")
                     .help("Indicates that the input file has a header in line 1")
+                    .action(clap::ArgAction::SetTrue)
                 )
                 .arg(
                     Arg::new("output")
@@ -77,6 +78,7 @@ fn main() {
                     .short('H')
                     .long("header")
                     .help("Indicates that the input file has a header in line 1")
+                    .action(clap::ArgAction::SetTrue)
                 )
                 .arg(
                     Arg::new("output")
@@ -97,16 +99,25 @@ fn main() {
 
     // Handle the liftover subcommand
     if let Some(liftover_matches) = matches.subcommand_matches("liftover") {
-        // Call your liftover function with liftover_matches as an argument
+        let has_header = liftover_matches.get_flag("header");
+        
+        
         eprintln!("Running liftover...");
-        let _ = liftover::run_liftover(&liftover_matches);
+
+        if let Err(e) = liftover::run_liftover(liftover_matches, has_header) {
+            eprintln!("Error running liftover: {}", e);
+        }
     }
+    
 
     // Handle the annotate subcommand
     if let Some(annotate_matches) = matches.subcommand_matches("annotate") {
-        // Call your annotate function with annotate_matches as an argument
+        let has_header = annotate_matches.get_flag("header");
+        
         eprintln!("Running annotate...");
-        annotate::run_annotate(&annotate_matches);
+        
+        if let Err(e) = annotate::run_annotate(annotate_matches, has_header) {
+            eprintln!("Error running annotate: {}", e);
+        }
     }
-
 }
