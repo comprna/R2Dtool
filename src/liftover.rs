@@ -43,9 +43,9 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
             if current_position + exon_length >= position {
                 // Calculate the genomic position based on the strand
                 let genomic_position = if transcript.strand.as_deref() == Some("+") {
-                    position - current_position + exon_data.start
+                    position - current_position + exon_data.start - 1
                 } else {
-                    exon_data.end - (position - current_position + 2)
+                    exon_data.end - (position - current_position + 2) + 1
                 };
                 // Get the chromosome name
                 let chrom = &transcript.chromosome;

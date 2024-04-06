@@ -144,3 +144,40 @@ cargo build --release --future-incompat-report
 
 
 time ./target/release/r2d annotate -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed | more
+
+
+
+##########
+
+# download and install R2Dtool 
+
+git clone git@github.com:pre-mRNA/R2Dtool.git && cd R2Dtool 
+cargo build --release 
+
+##########
+
+# compile from source and run liftover
+cd R2Dtool 
+caro build --release 
+export PATH="$PATH:$(pwd)/target/release/"
+
+# liftover transcriptomic sites to genomic coordinates
+mkdir ./test/outputs/
+r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
+
+# make a 6-col bedfile without header for bedtools
+tail -n +2 ./test/outputs/liftover.bed | cut -f1-6 > ./test/outputs/liftover.bed6
+
+# check that all sites are lifted over to 'A'
+export genome="/g/data/lf10/as7425/genomes/mouse_genome/GRCm39/Mus_musculus.GRCm39.dna.primary_assembly.fa"
+bedtools getfasta -s -fi ${genome} -bed ./test/outputs/liftover.bed6 | tail -n +2 | awk 'NR%2==1' | sort | uniq -c | sort -nr > ./test/outputs/liftover_sequence_context.txt
+cat ./test/outputs/liftover_sequence_context.txt
+
+# check non-A sites 
+bedtools getfasta -s -fi ${genome} -bed ./test/outputs/liftover.bed6 > ./test/outputs/all_sequence_context.txt
+grep -B 1 "G" ./test/outputs/all_sequence_context.txt 
+
+
+rm  -rf test_input
+
+///

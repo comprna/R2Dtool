@@ -137,10 +137,16 @@ export PATH="$PATH:$(pwd)/target/release"
 
 ```
 
-# annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype
-r2d annotate ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.gtf ./test/out_CHEUI_modelII_annotated.bed
+cd R2Dtool && export PATH="$PATH:$(pwd)/target/release/"
 
-# liftover annotated transcriptomic sites to genomic coordinates
+# liftover transcriptomic sites to genomic coordinates
+r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/liftover.bed
+
+
+# annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype
+
+
+
 r2d lift ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/out_CMII_annotated_lifted.bed
 ```
 
