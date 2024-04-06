@@ -163,7 +163,7 @@ export PATH="$PATH:$(pwd)/target/release/"
 
 # liftover transcriptomic sites to genomic coordinates
 mkdir ./test/outputs/ 2>/dev/null
-r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
+time r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
 
 # make a 6-col bedfile without header for bedtools
 tail -n +2 ./test/outputs/liftover.bed | cut -f1-6 > ./test/outputs/liftover.bed6
