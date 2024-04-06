@@ -45,13 +45,13 @@ fn main() {
                     .value_name("OUTPUT_FILE")
                     .help("Path to output file")
                 )
-                .arg(
-                    Arg::new("format")
-                    .short('f')
-                    .long("format")
-                    .value_name("FORMAT")
-                    .help("Specify the gene strutcture annotation format: gtf or gff (default: gff)")
-                )
+                // .arg(
+                //     Arg::new("format")
+                //     .short('f')
+                //     .long("format")
+                //     .value_name("FORMAT")
+                //     .help("Specify the gene strutcture annotation format: gtf or gff (default: gff)")
+                // )
         )
         .subcommand(
             Command::new("annotate")
@@ -85,13 +85,13 @@ fn main() {
                     .value_name("OUTPUT_FILE")
                     .help("Path to output file")
                 )
-                .arg(
-                    Arg::new("format")
-                    .short('f')
-                    .long("format")
-                    .value_name("FORMAT")
-                    .help("Specify the gene strutcture annotation format: gtf or gff (default: gff)")
-                )
+                // .arg(
+                //     Arg::new("format")
+                //     .short('f')
+                //     .long("format")
+                //     .value_name("FORMAT")
+                //     .help("Specify the gene strutcture annotation format: gtf or gff (default: gff)")
+                // )
         )
         .get_matches();
 
@@ -99,7 +99,7 @@ fn main() {
     if let Some(liftover_matches) = matches.subcommand_matches("liftover") {
         // Call your liftover function with liftover_matches as an argument
         eprintln!("Running liftover...");
-        liftover::run_liftover(&liftover_matches);
+        let _ = liftover::run_liftover(&liftover_matches);
     }
 
     // Handle the annotate subcommand

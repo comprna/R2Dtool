@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use crate::parse_annotation::{Transcript, read_gtf_file, read_gff_file};
+use std::error::Error;
+// use crate::parse_annotation::{Transcript, read_gtf_file, read_gff_file};
+use crate::parse_gtf::{Transcript, read_annotation_file};
 use std::collections::HashMap;
 
 pub fn convert_transcriptomic_to_genomic_coordinates(
@@ -19,7 +21,7 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
     // Remove the version from transcript ID
     let transcript_id = transcript_id_with_version.split('.').next().unwrap();
 
-    // Parse the transcriptomic position (second field) as a u64
+    // Parse the transcriptomic position (second field) as u64
     let position: u64 = site_fields[1].parse().unwrap();
 
     // Initialize the current_position variable to keep track of the cumulative exon lengths
@@ -67,23 +69,23 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
     None
 }
 
-pub fn run_liftover(matches: &clap::ArgMatches) {
-    let default_format = String::from("gff");
-    let format = matches.get_one("format").unwrap_or(&default_format);
+pub fn run_liftover(matches: &clap::ArgMatches) -> Result<(), Box<dyn Error>> {
 
-    let gff_file: String = matches.get_one::<String>("gff").unwrap().to_string();
+    // TODO: implement format matching for GFF3 file parsing 
+    // let default_format = String::from("gtf");
+    //let format = matches.get_one("format").unwrap_or(&default_format);
+
+    let gtf_file: String = matches.get_one::<String>("gtf").unwrap().to_string();
     let input_file: String = matches.get_one::<String>("input").unwrap().to_string();
     let output_file: Option<String> = matches.get_one::<String>("output").map(|s: &String| s.to_string());
-
-    let annotations = if format == "gff" {
-        read_gff_file(&gff_file)
-    } else {
-        read_gtf_file(&gff_file)
-    };
+    
+    // By default, read in the annotations as GTF file
+    // TODO: implement GFF3 parsing 
+    let annotations = read_annotation_file(&gtf_file, true)?;
 
     // Print the annotations in a table
-    // eprintln!("Previewing transcript annotations\n");
-    // preview_annotations(&annotations);
+    eprintln!("Previewing transcript annotations\n");
+    preview_annotations(&annotations);
 
     let has_header = matches.contains_id("header");
 
@@ -122,6 +124,7 @@ pub fn run_liftover(matches: &clap::ArgMatches) {
         }
         line.clear();
     }
+    Ok(())
 }
 
 pub fn preview_annotations(annotations: &HashMap<String, Transcript>) {

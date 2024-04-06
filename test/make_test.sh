@@ -17,3 +17,10 @@ export annotation="/g/data/lf10/as7425/genomes/mouse_genome/GRCm39/Mus_musculus.
 export subset_annotation="./GRCm39_subset.gtf"
 
 grep -f ${tx_list} ${annotation} > ${subset_annotation}
+
+# subset annotation for GFF3 
+cd /R2Dtool/test/
+
+export gff3="/g/data/lf10/as7425/genomes/mouse_genome/GRCm39/Mus_musculus.GRCm39.104.chr.gff3"
+export tx_list="/g/data/lf10/as7425/2020-11_mouseBrain/data/2021-10-26_mouseBrain-noSplice-CHEUI/transcript_list.txt"
+grep -f ${tx_list} ${gff3} > ./GRCm39_subset.gff3
