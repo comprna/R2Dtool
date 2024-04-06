@@ -5,21 +5,23 @@ use clap::{Arg,Command};
 pub mod parse_annotation;
 pub mod annotate;
 pub mod liftover;
+pub mod parse_gtf;
 
 fn main() {
     let matches = Command::new("R2Dtool")
         .version("1.0.0")
         .author("AJ Sethi, compRNA <aditya.sethi@anu.edu.au; CompRNA@ANU365.onmicrosoft.com>")
         .about("R2Dtool")
+        .arg_required_else_help(true) 
         .subcommand(
             Command::new("liftover")
                 .about("Converts transcriptomic to genomic coordinates")
                 .arg(
-                    Arg::new("gff")
+                    Arg::new("gtf")
                     .short('g')
-                    .long("gff")
-                    .value_name("GFF_FILE")
-                    .help("Path to gene structure annotation")
+                    .long("gtf")
+                    .value_name("GTF_FILE")
+                    .help("Path to GTF gene structure annotation")
                     .required(true)
                 )
                 .arg(
@@ -52,14 +54,14 @@ fn main() {
                 )
         )
         .subcommand(
-            Command::new("Annotate")
-                .about("Annotates transcriptomic sites")
+            Command::new("annotate")
+                .about("Annotates transcriptomic sites with genomic cooridnates")
                 .arg(
-                    Arg::new("gff")
+                    Arg::new("gtf")
                     .short('g')
-                    .long("gff")
-                    .value_name("GFF_FILE")
-                    .help("Path to gene structure annotation")
+                    .long("gtf")
+                    .value_name("GTF_FILE")
+                    .help("Path to GTF gene structure annotation")
                     .required(true)
                 )
                 .arg(
@@ -108,69 +110,3 @@ fn main() {
     }
 
 }
-
-//
-// fn main() {
-//     let matches = App::new("R2Dtool")
-//     .version("0.1.0")
-//     .author("Your Name your.email@example.com")
-//     .about("Converts transcriptomic coordinates to genomic coordinates")
-//     .arg(
-//         Arg::new("gff")
-//         .short("g")
-//         .long("gff")
-//         .value_name("GFF_FILE")
-//         .help("Path to gene structure annotation")
-//         .required(true)
-//         .takes_value(true),
-//     )
-//     .arg(
-//         Arg::new("input")
-//         .short("i")
-//         .long("input")
-//         .value_name("INPUT_FILE")
-//         .help("Path to input file with transcriptomic coordinates")
-//         .required(true)
-//         .takes_value(true),
-//     )
-//     .arg(
-//         Arg::new("header")
-//         .short("H")
-//         .long("header")
-//         .help("Indicates that the input file has a header in line 1")
-//         .takes_value(false),
-//     )
-//     .arg(
-//         Arg::new("output")
-//         .short("o")
-//         .long("output")
-//         .value_name("OUTPUT_FILE")
-//         .help("Path to output file")
-//         .takes_value(true),
-//     )
-//     .arg(
-//         Arg::new("format")
-//         .short("f")
-//         .long("format")
-//         .value_name("FORMAT")
-//         .help("Specify the gene strutcture annotation format: gtf or gff (default: gff)")
-//         .takes_value(true),
-//     )
-//     .arg(
-//         Arg::new("subcommand")
-//         .help("Subcommand to run: liftover or annotate")
-//         .required(true)
-//         .index(1),
-//     )
-//     .get_matches();
-//
-//     // Check the subcommand provided and call the appropriate function
-//     match matches.subcommand() {
-//         ("liftover", Some(sub_m)) => liftover::run_liftover(sub_m),
-//         ("annotate", Some(_sub_m)) => annotate::run_annotate(),
-//         _ => {
-//             eprintln!("Invalid subcommand provided. Please choose 'liftover' or 'annotate'.");
-//             std::process::exit(1);
-//         }
-//     }
-// }

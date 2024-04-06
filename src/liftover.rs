@@ -82,8 +82,8 @@ pub fn run_liftover(matches: &clap::ArgMatches) {
     };
 
     // Print the annotations in a table
-    eprintln!("Previewing transcript annotations\n");
-    preview_annotations(&annotations);
+    // eprintln!("Previewing transcript annotations\n");
+    // preview_annotations(&annotations);
 
     let has_header = matches.contains_id("header");
 

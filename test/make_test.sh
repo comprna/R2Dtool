@@ -1,5 +1,5 @@
 # navigate to cheui data directory
-cd /g/data/lf10/as7425/2020-11_mouseBrain/data/2021-10-26_mouseBrain-noSplice-CHEUI
+cd /g/data/lf10/as7425/2020-11_mouseBrain/data/2021-10-26_mouseBrain-noSplice-CHEUI/
 
 # pick a model II dataset
 export model_ii="/g/data/lf10/as7425/2020-11_mouseBrain/data/2021-10-26_mouseBrain-noSplice-CHEUI/WT_E15_read_level.txt_site_level.txt"

@@ -37,10 +37,9 @@ Usage: r2d liftover -i <input> -g <gtf>
 
 Arguments:
     -i, --input <input>: Path to tab-separated transcriptome sites in BED format. 
-    -g, --gff <annotation>: Path to gene structure annotation in GFF or GTF (requires -f gtf) format.
+    -g, --gtf <annotation>: Path to gene structure annotation in GTF format.
 
 Options:
-    -f, --format <FORMAT>: Structure of gene annotation used, either GFF or GTF (default: GFF).
     -H, --header: Indicates the input file has a header, which will be preserved in the output (default: false).
     -o, --output <OUTPUT>: Path to output file. If not specified, results will be printed to STDOUT.
 
@@ -55,10 +54,9 @@ Usage: r2d annotate -i <input> -g <gtf>
 
 Arguments:
     -i, --input <input>: Path to tab-separated transcriptome sites in BED format. 
-    -g, --gff <annotation>: Path to gene structure annotation in GFF or GTF (requires -f gtf) format.
+    -g, --gtf <annotation>: Path to gene structure annotation in GTF format.
 
 Options:
-    -f, --format <FORMAT>: Structure of gene annotation used, either GFF or GTF (default: GFF).
     -H, --header: Indicates the input file has a header, which will be preserved in the output (default: false).
     -o, --output <OUTPUT>: Path to output file. If not specified, results will be printed to STDOUT.
 
@@ -79,7 +77,7 @@ transcript_biotype | gene_name | gene_id | tx_len | cds_len | utr5_len | utr3_le
 > [!NOTE]
 > - ```liftover``` and ```annotate``` requires columns 1-6 to contain feature coordinates against a transcriptome reference
 > - ```annotate``` can be perfomed before, but __not__ after, ```liftover```
-> - The GTF or GFF3 file used must exactly match the transcriptome to which features are mapped 
+> - The GTF file used must exactly match the transcriptome to which features are mapped 
 
 ## Visualising isoform-aware RNA feature metadistributions
 
@@ -112,6 +110,18 @@ positional arguments:
 ```
 # Installation and dependencies 
 
+#### Dependencies 
+
+> [!NOTE]
+> R2Dtool's core ```liftover``` and ```annotation``` functionality are built into an executable program built on Rust, and dependencies are managed during compilation by Cargo. 
+> R2Dtool's ```metatranscript``` and ```metajunction``` plotting functinality are implemented as executable R scripts, and depend on the following packages:
+
+```
+r==4.2.0
+tidyverse==1.3.1
+genomicFeatures==1.48.0
+rtracklayer==1.56.0
+```
 #### Compiling R2Dtool from source: 
 
 ```
@@ -126,10 +136,6 @@ export PATH="$PATH:$(pwd)/target/release"
 #### Testing R2Dtool installation 
 
 ```
-# download and compile R2Dtool 
-git clone git@github.com:comprna/R2Dtool.git && cd R2Dtool
-cargo build --release
-export PATH="$PATH:$(pwd)/target/release"
 
 # annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype
 r2d annotate ./test/out_CHEUI_modelII.bed ./test/GRCm39_subset.gtf ./test/out_CHEUI_modelII_annotated.bed
@@ -140,18 +146,7 @@ r2d lift ./test/out_CHEUI_modelII_annotated.bed ./test/GRCm39_subset.gtf ./test/
 
 > Test data was generated using [cheui](https://github.com/comprna/CHEUI) and converted to bed-like coordinates using [R2Dtool utilities](https://github.com/comprna/R2Dtool/blob/main/scripts/cheui_to_bed.sh).
 
-#### Dependencies 
 
-> [!NOTE]
-> R2Dtool's core ```liftover``` and ```annotation``` functionality are built into an executable program built on Rust, and dependencies are managed during compilation by Cargo. 
-> R2Dtool's ```metatranscript``` and ```metajunction``` plotting functinality are implemented as executable R scripts, and depend on the following packages:
-
-```
-r==4.2.0
-tidyverse==1.3.1
-genomicFeatures==1.48.0
-rtracklayer==1.56.0
-```
 
 # Input and output data structure
 
@@ -175,31 +170,18 @@ bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 ```
 
 # General notes
-- Transposes transcriptomic coordinates to their underlying genomic coordinates to enable the comparison of epitranscriptomic sites between overlapping transcript isoforms, and also to enable visualization of epitranscriptomic sites on a genome browser.
 - Transcriptome to genome liftover relies only on transcript_id, site coordinates, and strand (columns 1:3,6)
-- The annotation used must be in GTF format and correspond correctly to the transcriptome used
-- Other columns aren't considered during annotation or liftover, and can be used to store additional information of interest
-- A header containing column names is expected for annotation and liftover
-- Issues with transcript_id and transcript_version? Try commenting out lines 32:33 and 40:41 in lift.R
-- Using a GENCODE annotation? Try commenting out line 25 in lift.R and line 27 in annotate.R
-- GENCODE annotations use 'transcript_type' whereas Ensembl annotations use 'transcript_biotype'?
-- Because the output files will have a header, this may need to be removed prior to opening the file on some genome browsers.
-
-
+- The annotation used must correspond exactly to the transcriptome used
 
 
 
 
 ```
-                                          ┌──────── liftover ───────►   Genome-centric transcriptomic sites
-                                          │
-Isoform-centric transcriptomic sites  ────┼──────── annotate ───────►   Annotated isoform-centric transcriptomic sites
-                                          │
-       .=.                                └───── lift + annotate ───►   Annotated genome-centric transcriptomic sites
+       .=.                              
       '==c|
       [)-+|    <(RNA to DNA)
       //'_|        
- snd /]==;\                                                                                                                                                                     
+ snd /]==;\                                                                                                                                                               
 ```
 
 

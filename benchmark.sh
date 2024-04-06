@@ -100,16 +100,37 @@ echo "Full | $FULL_RUNTIME" >> /scratch/lf10/as7425/liftover_R_times.txt
 
 #########
 
-cd /home/150/as7425/R2Dtool/R2Dtool_rust
-module load R
+cd /home/150/as7425/R2Dtool
 
-cargo build --release && time ./target/release/R2Dtool_rust annotate -f gtf -H -g ../test/GRCm39_subset.gtf -i ../test/out_CHEUI_modelII.bed | head
-time Rscript ../scripts/R2_annotate.R "../test/out_CHEUI_modelII.bed" "../test/GRCm39_subset.gtf" "./test_out.txt"
+time ./target/release/r2d annotate -f gtf -H -g ../test/GRCm39_subset.gtf -i ../test/out_CHEUI_modelII.bed | head
+
+time Rscript /scripts/R2_annotate.R "../test/out_CHEUI_modelII.bed" "../test/GRCm39_subset.gtf" "./test_out.txt"
 
 
+cargo build --release 
 
 #########
 
 # testing 2024/04/05
-cd /home/150/as7425/R2Dtool/R2Dtool_rust
+cd /home/150/as7425/R2Dtool/
+
+# run unit tests 
+export RUST_BACKTRACE=1
+export RUST_LOG=debug 
+cargo test -- --nocapture 
+
+
+rm -rf target
+
+
 cargo build --release --future-incompat-report
+
+
+
+
+
+time ./target/release/r2d annotate -f gtf -H -g ../test/GRCm39_subset.gtf -i ../test/out_CHEUI_modelII.bed | head
+
+
+# R2Dtool
+time ./target/release/r2d liftover -f gtf -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed | more

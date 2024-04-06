@@ -18,12 +18,14 @@ pub struct Exon {
     pub feature: Option<String>,
 }
 
-// Define transcript structure, which contains exons
+// Define transcript structure
+// Each transcript maps to a agene 
+// And contains one or more exons
 #[derive(Debug, PartialEq, Clone)]
 pub struct Transcript {
     pub transcript_id: String,
-    pub gene_id: Option<String>, // Add gene_id field
-    pub gene_name: Option<String>, // Add gene_name field
+    pub gene_id: Option<String>, 
+    pub gene_name: Option<String>, 
     pub utr5_len: Option<u64>,
     pub cds_len: Option<u64>,
     pub utr3_len: Option<u64>,
@@ -35,13 +37,13 @@ pub struct Transcript {
     pub chromosome: String,
 }
 
-// Default trait for transript structure
+// Default traits for transcript 
 impl Default for Transcript {
     fn default() -> Self {
         Self {
             transcript_id: String::new(),
-            gene_id: None, // Add gene_id default
-            gene_name: None, // Add gene_name default
+            gene_id: None, 
+            gene_name: None, 
             utr5_len: None,
             cds_len: None,
             utr3_len: None,
@@ -58,7 +60,13 @@ impl Default for Transcript {
 // Read the gtf file; create a HashMap<String, Transcript>, each key (a String) will map to a single Transcript object.
 // each transcript has up to several exon objects stored in the exons field, which is a vector of Exon structs.
 pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
+    
+    
     let mut transcripts: HashMap<String, Transcript> = HashMap::new();
+
+    // Count unused features 
+    let mut ignored_features: HashMap<String, u32> = HashMap::new();
+
 
     let mut reader = gff::Reader::from_file(gtf_file, gff::GffType::GTF2)
         .expect("Unable to open the gtf file");
@@ -123,7 +131,7 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
                 strand: Some(strand),
                 chromosome,
             }
-        }); // end missing brace
+        }); 
 
         let feature_length = (*record.end() - *record.start() + 1) as u64;
 
@@ -162,12 +170,10 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
                 }
             }
             other => {
-                eprintln!(
-                    "Warning: Unexpected feature type '{}' found. Please check the GTF file.",
-                    other
-                );
+                *ignored_features.entry(other.to_string()).or_insert(0) += 1;
             }
-        }
+            }
+        
     }
 
     transcripts.retain(|_, transcript| {
@@ -190,12 +196,25 @@ pub fn read_gtf_file(gtf_file: &str) -> HashMap<String, Transcript> {
         }
     }
 
+    if !ignored_features.is_empty() {
+        eprintln!("Ignored the following annotation features:");
+        for (feature_type, count) in ignored_features {
+            eprintln!("- {}: {} occurrences", feature_type, count);
+        }
+    }
+
     transcripts
 }
 
 // read gff file
 pub fn read_gff_file(gff_file: &str) -> HashMap<String, Transcript> {
+
     let mut transcripts: HashMap<String, Transcript> = HashMap::new();
+
+    // Count unused features 
+    // let mut ignored_features: HashMap<String, u32> = HashMap::new();
+
+
     let mut reader = gff::Reader::from_file(gff_file, gff::GffType::GFF3).unwrap();
 
     let biotype_keys = vec!["gene_biotype", "gene_type", "transcript_biotype"];
@@ -296,8 +315,9 @@ pub fn read_gff_file(gff_file: &str) -> HashMap<String, Transcript> {
         }
     }
 
-    println!("Size of the transcripts hashmap: {}", transcripts.len()); // Add this line
+    println!("Size of the transcripts hashmap: {}", transcripts.len()); 
     transcripts
+
 }
 
 // parse gff attributes
