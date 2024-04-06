@@ -169,15 +169,23 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
     up_junc_dist.map_or("NA".to_string(), |x| x.to_string()),
     down_junc_dist.map_or("NA".to_string(), |x| x.to_string())
 );
-                    writeln!(output_writer, "{}", output_line).unwrap();
+                    if let Err(_) = writeln!(output_writer, "{}", output_line) {
+                        break;
+                    }
                 } else {
-                    writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line).unwrap();
+                    if let Err(_) = writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line) {
+                        break;
+                    }
                 }
             } else {
-                writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line).unwrap();
+                if let Err(_) = writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line) {
+                    break;
+                }
             }
         } else {
-            writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line).unwrap();
+            if let Err(_) = writeln!(output_writer, "{}\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA\tNA", line) {
+                break;
+            }
         }
     }
     Ok(())

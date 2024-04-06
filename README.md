@@ -40,8 +40,8 @@ Arguments:
     -g, --gtf <annotation>: Path to gene structure annotation in GTF format.
 
 Options:
-    -H, --header: Indicates the input file has a header, which will be preserved in the output (default: false).
-    -o, --output <OUTPUT>: Path to output file. If not specified, results will be printed to STDOUT.
+    -H, --header: Indicates the input file has a header, which will be preserved in the output [Default: False]
+    -o, --output <OUTPUT>: Path to output file [Default: STDOUT]
 
 ```
 - Liftover prepends 6 columns to the input file, containing the genome coordinates of the transcript features in BED format
@@ -57,8 +57,8 @@ Arguments:
     -g, --gtf <annotation>: Path to gene structure annotation in GTF format.
 
 Options:
-    -H, --header: Indicates the input file has a header, which will be preserved in the output (default: false).
-    -o, --output <OUTPUT>: Path to output file. If not specified, results will be printed to STDOUT.
+    -H, --header: Indicates the input file has a header, which will be preserved in the output [Default: False]
+    -o, --output <OUTPUT>: Path to output file [Default: STDOUT]
 
 ```
 

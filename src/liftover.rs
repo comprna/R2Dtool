@@ -118,7 +118,9 @@ pub fn run_liftover(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
         } else if let Some(genomic_coordinates) =
         convert_transcriptomic_to_genomic_coordinates(&site_fields, &annotations)
         {
-            writeln!(output_writer, "{}", genomic_coordinates).unwrap();
+            if let Err(_) = writeln!(output_writer, "{}", genomic_coordinates) {
+                break;
+            }
         }
         line.clear();
     }
