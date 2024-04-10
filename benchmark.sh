@@ -157,13 +157,14 @@ cargo build --release
 ##########
 
 # compile from source and run liftover
-cd R2Dtool 
+cd ~/R2Dtool 
 cargo build --release 
 export PATH="$PATH:$(pwd)/target/release/"
 
 # liftover transcriptomic sites to genomic coordinates
 mkdir ./test/outputs/ 2>/dev/null
 time r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
+head ./test/outputs/liftover.bed
 
 # make a 6-col bedfile without header for bedtools
 tail -n +2 ./test/outputs/liftover.bed | cut -f1-6 > ./test/outputs/liftover.bed6
@@ -199,3 +200,15 @@ grep -A 20 -B 20 "ENSMUST00000124002.2" ./test/outputs/annotate_all.txt | more
 
 # no gene info for 
 ENSMUST00000124002.2
+
+
+##########
+
+# test annotation parsing for GENCODE gtf files
+mkdir ~/R2Dtool/test/temp
+export annotation="/g/data/lf10/as7425/genomes/human_genome/gencode/gencode_v38/gencode.v38.annotation.gtf"
+cat $annotation | grep "ENST00000579823.1" > ~/R2Dtool/test/temp/gecode_test.gtf
+
+# see how the transcript is parsed 
+cd ~/R2Dtool 
+cargo test test_print_all_transcript_info -- --nocapture 

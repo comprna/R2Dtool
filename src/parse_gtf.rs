@@ -26,8 +26,8 @@ pub struct Exon {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Transcript {
     pub transcript_id: String,
-    pub gene_id: Option<String>, 
-    pub gene_name: Option<String>, 
+    pub gene_id: Option<String>,
+    pub gene_name: Option<String>,
     pub utr5_len: Option<u64>,
     pub cds_len: Option<u64>,
     pub utr3_len: Option<u64>,
@@ -37,6 +37,8 @@ pub struct Transcript {
     pub splice_junction_positions: Vec<u64>,
     pub strand: Option<String>,
     pub chromosome: String,
+    pub cds_starts: Vec<u64>,
+    pub cds_ends: Vec<u64>,
 }
 
 // Set default traits for transcripts 
@@ -54,7 +56,9 @@ impl Default for Transcript {
             biotype: None,
             splice_junction_positions: Vec::new(),
             strand: None,
-            chromosome: String::new(),
+            chromosome: String::new(),    
+            cds_starts: Vec::new(),
+            cds_ends: Vec::new(),
         }
     }
 }
@@ -178,6 +182,8 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                             splice_junction_positions: Vec::new(),
                             strand: Some(strand),
                             chromosome,
+                            cds_starts: Vec::new(),
+                            cds_ends: Vec::new(),
                         };
                         entry.insert(transcript);
                         debug!("Created new transcript: {}", transcript_id);
@@ -187,6 +193,8 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
             "CDS" => {
                 if let Some(transcript) = transcripts.get_mut(&transcript_id) {
                     transcript.cds_len = Some(transcript.cds_len.unwrap_or(0) + feature_length);
+                    transcript.cds_starts.push(*record.start());
+                    transcript.cds_ends.push(*record.end());
                     debug!("Updated CDS length for transcript: {}", transcript_id);
                 }
             }
@@ -207,6 +215,61 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                     warn!("More than one transcript with the same name '{}' found. Please check the annotation file.", transcript_id);
                 }
             }
+            "UTR" => {
+                
+                // Construct a UTR feature similar to how you construct an Exon
+                let utr_feature = Exon {  // Assuming UTR features have a similar structure; adjust as needed
+                    seq_id: record.seqname().to_string(),
+                    source: record.source().to_string(),
+                    feature_type: record.feature_type().to_string(),
+                    start: *record.start(),
+                    end: *record.end(),
+                    length: feature_length,
+                    score: record.score().map(|s| s as f64),
+                    strand: record.strand().map(|s| s.strand_symbol().to_string()).unwrap_or_else(|| ".".to_string()),
+                    frame: None, // UTRs typically do not have a frame, adjust according to your data structure
+                    attributes: attributes.clone(),
+                    feature: Some("UTR".to_string()), // Explicitly marking the feature as UTR
+                };
+        
+                debug!("UTR Feature: {:?}", utr_feature);
+        
+                // Add the UTR feature to the corresponding transcript
+                match transcripts.entry(transcript_id.clone()) {
+                    Entry::Occupied(mut entry) => {
+                        let transcript = entry.get_mut();
+                        transcript.exons.push(utr_feature); // Here we are adding UTRs to the exons vector; consider renaming or creating a separate vector for clarity
+                        debug!("Added UTR to existing transcript: {}", transcript_id);
+                    }
+                    Entry::Vacant(entry) => {
+                        // Similar logic as for exons, creating a new transcript if not already present
+                        let biotype = find_biotype(&attributes, &biotype_keys);
+                        let strand = record.strand().map(|s| s.strand_symbol().to_string()).unwrap_or_else(|| ".".to_string());
+                        let chromosome = record.seqname().to_string();
+                        let gene_id = attributes.get(gene_id_attr).cloned();
+                        let gene_name = attributes.get("gene_name").cloned();
+                        let transcript = Transcript {
+                            transcript_id: transcript_id.clone(),
+                            gene_id,
+                            gene_name,
+                            utr5_len: None,
+                            cds_len: None,
+                            utr3_len: None,
+                            has_missing_features: false,
+                            exons: vec![utr_feature], // Adding the UTR feature
+                            biotype,
+                            splice_junction_positions: Vec::new(),
+                            strand: Some(strand),
+                            chromosome,
+                            cds_starts: Vec::new(),
+                            cds_ends: Vec::new(),
+                        };
+                        entry.insert(transcript);
+                        debug!("Created new transcript with UTR: {}", transcript_id);
+                    }
+                }
+            }
+        
             other => {
                 *ignored_features.entry(other.to_string()).or_insert(0) += 1;
             }
@@ -234,7 +297,105 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
             warn!("- {}: {} occurrences", feature_type, count);
         }
     }
+    
+    
+    // Post-processing: Calculate UTR lengths based on their position relative to CDS
+    // for transcript in transcripts.values_mut() {
+    //     // Ensure features are sorted by their start position
+    //     transcript.exons.sort_by_key(|exon| exon.start);
+    //     println!("UTR detected 0");
+    //     let cds_range = transcript.exons.iter()
+    //         .filter(|exon| exon.feature_type == "CDS")
+    //         .fold(None, |acc: Option<(u64, u64)>, exon| match acc {
+    //             None => Some((exon.start, exon.end)),
+    //             Some((start, end)) => Some((start.min(exon.start), end.max(exon.end))),
+    //         });
+        
+    //     println!("UTR detected 1");
+    //     if let Some((cds_start, cds_end)) = cds_range {
+    //         println!("UTR detected 2");
+    //         for feature in &transcript.exons {
+    //             if feature.feature_type == "UTR" {
+    //                 println!("UTR detected 3");
+    //                 // Adjust logic based on strand
+    //                 let strand = transcript.strand.as_deref().unwrap_or(".");
+    //                 match strand {
+    //                     "+" | "." => {
+    //                         if feature.end < cds_start {
+    //                             // 5'UTR for positive strand
+    //                             transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature.length);
+    //                         } else if feature.start > cds_end {
+    //                             // 3'UTR for positive strand
+    //                             transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature.length);
+    //                         }
+    //                     },
+    //                     "-" => {
+    //                         if feature.start > cds_end {
+    //                             // 5'UTR for negative strand (logic is reversed)
+    //                             transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature.length);
+    //                         } else if feature.end < cds_start {
+    //                             // 3'UTR for negative strand (logic is reversed)
+    //                             transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature.length);
+    //                         }
+    //                     },
+    //                     _ => {}
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     }
+    //println!("UTR detected 0");
+    for transcript in transcripts.values_mut() {
+        //println!("Processing transcript: {}", transcript.transcript_id);
+        
+        // Sort the CDS start and end vectors to ensure they are in the correct order
+        transcript.cds_starts.sort_unstable();
+        transcript.cds_ends.sort_unstable();
 
+        //println!("UTR detected 1");
+        
+        // Assume each transcript has at least one CDS; thus, the first CDS start and last CDS end define the CDS range
+        if let (Some(&cds_start), Some(&cds_end)) = (transcript.cds_starts.first(), transcript.cds_ends.last()) {
+            //println!("UTR detected 2");
+            //println!("Calculated CDS range: start {}, end {}", cds_start, cds_end);
+        
+            for feature in &transcript.exons {
+                if feature.feature_type == "UTR" {
+                    //println!("UTR detected 3");
+                    let strand = transcript.strand.as_deref().unwrap_or(".");
+                    match strand {
+                        "+" | "." => {
+                            if feature.end < cds_start {
+                                // 5'UTR for positive strand
+                                transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature.length);
+                                println!("5'UTR detected with length {}", feature.length);
+                            } else if feature.start > cds_end {
+                                // 3'UTR for positive strand
+                                transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature.length);
+                                println!("3'UTR detected with length {}", feature.length);
+                            }
+                        },
+                        "-" => {
+                            if feature.start > cds_end {
+                                // 5'UTR for negative strand (logic is reversed)
+                                transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature.length);
+                                println!("5'UTR (neg strand) detected with length {}", feature.length);
+                            } else if feature.end < cds_start {
+                                // 3'UTR for negative strand (logic is reversed)
+                                transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature.length);
+                                println!("3'UTR (neg strand) detected with length {}", feature.length);
+                            }
+                        },
+                        _ => {}
+                    }
+                }
+            }
+        } else {
+            // eprintln!("No CDS range calculated for transcript: {}", transcript.transcript_id);
+        }
+    }
+    
+    
     debug!("Finished parsing annotation file.");
 
     Ok(transcripts)
@@ -275,7 +436,6 @@ fn check_transcript_length(transcript: &mut Transcript) {
 }
 
 
-
 // Unit tests 
 #[cfg(test)]
 mod tests {
@@ -295,6 +455,65 @@ mod tests {
 
         assert!(!transcripts.is_empty());
         // TODO: Add assertions to check the expected behavior and results
+    }
+
+    #[test]
+    fn test_specific_transcript_info() {
+        init(); 
+
+        
+        let gtf_file_path = "/home/150/as7425/R2Dtool/test/gencode_v38.gtf";
+        let target_transcript_id = "ENST00000579823.1";
+
+        // Read the GTF file
+        let transcripts = read_annotation_file(gtf_file_path, true).expect("Failed to read GTF file");
+        
+        // Check if the target transcript ID is present and print its details
+        if let Some(transcript) = transcripts.get(target_transcript_id) {
+            println!("Transcript ID: {}", transcript.transcript_id);
+            println!("Gene ID: {:?}", transcript.gene_id);
+            println!("Gene Name: {:?}", transcript.gene_name);
+            println!("Chromosome: {}", transcript.chromosome);
+            println!("Strand: {:?}", transcript.strand);
+            println!("Exons Count: {}", transcript.exons.len());
+            
+        } else {
+            println!("Transcript ID {} not found.", target_transcript_id);
+        }
+    }
+
+    #[test]
+    fn test_print_all_transcript_info() {
+        init(); // Initialize logging if necessary
+
+        // file path 
+        let gtf_file_path = "/home/150/as7425/R2Dtool/test/gencode_v38.gtf";
+
+        // Read the GTF file
+        let transcripts = read_annotation_file(gtf_file_path, true).expect("Failed to read GTF file");
+
+        // Iterate over all transcripts and print their details
+        for (transcript_id, transcript) in transcripts.iter() {
+            println!("Transcript ID: {}", transcript_id);
+            println!("Gene ID: {:?}", transcript.gene_id);
+            println!("Gene Name: {:?}", transcript.gene_name);
+            println!("Chromosome: {}", transcript.chromosome);
+            println!("Strand: {:?}", transcript.strand);
+            println!("Exons Count: {}", transcript.exons.len());
+            println!("Biotype: {:?}", transcript.biotype);
+            println!("CDS Length: {:?}", transcript.cds_len);
+            println!("5' UTR Length: {:?}", transcript.utr5_len);
+            println!("3' UTR Length: {:?}", transcript.utr3_len);
+            println!("Has Missing Features: {}", transcript.has_missing_features);
+            println!("Splice Junction Positions: {:?}", transcript.splice_junction_positions);
+
+            // Print exon details for each transcript
+            for exon in &transcript.exons {
+                println!("\tExon: {:?}", exon);
+            }
+
+            println!("---------------------------------------------------");
+        }
     }
 
     // // Test the parsing of GFF3 files 

@@ -99,7 +99,7 @@ fn splice_site_distances(tx_coord: u64, splice_sites: &[SpliceSite]) -> (Option<
 
 pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), Box<dyn Error>> {
    
-    eprintln!("Running the annotate functionality...");
+    // eprintln!("Running the annotate functionality...");
    
     let gtf_file: String = matches.get_one::<String>("gtf").unwrap().to_string();
     let input_file: String = matches.get_one::<String>("input").unwrap().to_string();
@@ -213,11 +213,11 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
 }
 
 pub fn preview_annotations(annotations: &HashMap<String, Transcript>) {
-    println!("Number of annotations: {}", annotations.len()); // Add this line
+    eprintln!("Number of annotations: {}", annotations.len()); 
     for (key, transcript) in annotations {
-        println!("Annotations start");
-        println!("Transcript ID: {}", key);
-        println!("{:#?}", transcript);
-        println!("Annotations end");
+        eprintln!("Annotations start");
+        eprintln!("Transcript ID: {}", key);
+        eprintln!("{:#?}", transcript);
+        eprintln!("Annotations end");
     }
 }
