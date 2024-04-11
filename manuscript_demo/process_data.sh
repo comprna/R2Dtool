@@ -17,10 +17,10 @@ export wd="/g/data/lf10/as7425/R2DTool_demo/"; mkdir -p ${wd}
 bash ~/R2Dtool/scripts/cheui_to_bed.sh ${methylation_calls} "${wd}/methylation_calls.bed"
 
 # annotate the methylation calls against gencode v38 
-r2d annotate -i "${wd}/methylation_calls.bed" -g ${annotation} -H > "${wd}/methylation_calls_annotated.bed"
+time r2d annotate -i "${wd}/methylation_calls.bed" -g ${annotation} -H > "${wd}/methylation_calls_annotated.bed"
 
 # liftover the annotated called to genomic coordinates 
-r2d liftover -i "${wd}/methylation_calls.bed" -g ${annotation} -H > "${wd}/methylation_calls_annotated.bed"
+time r2d liftover -i "${wd}/methylation_calls_annotated.bed" -g ${annotation} -H > "${wd}/methylation_calls_annotated_lifted.bed"
 
 # annotate methylation calls using Gencode v38
 time Rscript ~/R2Dtool/scripts/R2_annotate.R "${wd}/methylationCalls.bed" "${annotation}" "${wd}/methylationCalls_annotated.bed"

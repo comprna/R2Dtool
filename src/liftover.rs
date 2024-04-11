@@ -58,8 +58,8 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
                 // Get the genomic strand
                 let genomic_strand = &transcript.strand;
 
-                // Join the additional columns (fields after the second one) using a tab character
-                let additional_columns = site_fields[2..].join("\t");
+                // Keep all original columns in the output of the liftover 
+                let additional_columns = site_fields.join("\t");
 
                 // Return the formatted output string
                 return Some(format!(

@@ -368,22 +368,22 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                             if feature.end < cds_start {
                                 // 5'UTR for positive strand
                                 transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature.length);
-                                println!("5'UTR detected with length {}", feature.length);
+                                // println!("5'UTR detected with length {}", feature.length);
                             } else if feature.start > cds_end {
                                 // 3'UTR for positive strand
                                 transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature.length);
-                                println!("3'UTR detected with length {}", feature.length);
+                                // println!("3'UTR detected with length {}", feature.length);
                             }
                         },
                         "-" => {
                             if feature.start > cds_end {
                                 // 5'UTR for negative strand (logic is reversed)
                                 transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature.length);
-                                println!("5'UTR (neg strand) detected with length {}", feature.length);
+                                // println!("5'UTR (neg strand) detected with length {}", feature.length);
                             } else if feature.end < cds_start {
                                 // 3'UTR for negative strand (logic is reversed)
                                 transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature.length);
-                                println!("3'UTR (neg strand) detected with length {}", feature.length);
+                                // println!("3'UTR (neg strand) detected with length {}", feature.length);
                             }
                         },
                         _ => {}
@@ -487,7 +487,7 @@ mod tests {
         init(); // Initialize logging if necessary
 
         // file path 
-        let gtf_file_path = "/home/150/as7425/R2Dtool/test/gencode_v38.gtf";
+        let gtf_file_path = "./test/gencode_v38.gtf";
 
         // Read the GTF file
         let transcripts = read_annotation_file(gtf_file_path, true).expect("Failed to read GTF file");
