@@ -58,8 +58,8 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
                 // Get the genomic strand
                 let genomic_strand = &transcript.strand;
 
-                // Keep all original columns in the output of the liftover 
-                let additional_columns = site_fields.join("\t");
+                // Join the additional columns (fields after the second one) using a tab character
+                let additional_columns = site_fields[1..].join("\t");
 
                 // Return the formatted output string
                 return Some(format!(
@@ -111,7 +111,7 @@ pub fn run_liftover(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
         // Update the header for the output file
         let output_header = format!(
             "chromosome\tstart\tend\tname\tscore\tstrand\t{}",
-            header_fields[2..].join("\t")
+            header_fields[0..].join("\t")
         );
         writeln!(output_writer, "{}", output_header).unwrap();
     }

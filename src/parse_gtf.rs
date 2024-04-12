@@ -344,7 +344,7 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
     //         }
     //     }
     //     }
-    //println!("UTR detected 0");
+
     for transcript in transcripts.values_mut() {
         //println!("Processing transcript: {}", transcript.transcript_id);
         
@@ -352,16 +352,11 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
         transcript.cds_starts.sort_unstable();
         transcript.cds_ends.sort_unstable();
 
-        //println!("UTR detected 1");
-        
         // Assume each transcript has at least one CDS; thus, the first CDS start and last CDS end define the CDS range
         if let (Some(&cds_start), Some(&cds_end)) = (transcript.cds_starts.first(), transcript.cds_ends.last()) {
-            //println!("UTR detected 2");
-            //println!("Calculated CDS range: start {}, end {}", cds_start, cds_end);
-        
             for feature in &transcript.exons {
                 if feature.feature_type == "UTR" {
-                    //println!("UTR detected 3");
+                    
                     let strand = transcript.strand.as_deref().unwrap_or(".");
                     match strand {
                         "+" | "." => {
@@ -369,6 +364,7 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                                 // 5'UTR for positive strand
                                 transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature.length);
                                 // println!("5'UTR detected with length {}", feature.length);
+
                             } else if feature.start > cds_end {
                                 // 3'UTR for positive strand
                                 transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature.length);
@@ -380,6 +376,7 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                                 // 5'UTR for negative strand (logic is reversed)
                                 transcript.utr5_len = Some(transcript.utr5_len.unwrap_or(0) + feature.length);
                                 // println!("5'UTR (neg strand) detected with length {}", feature.length);
+
                             } else if feature.end < cds_start {
                                 // 3'UTR for negative strand (logic is reversed)
                                 transcript.utr3_len = Some(transcript.utr3_len.unwrap_or(0) + feature.length);
@@ -462,8 +459,8 @@ mod tests {
         init(); 
 
         
-        let gtf_file_path = "/home/150/as7425/R2Dtool/test/gencode_v38.gtf";
-        let target_transcript_id = "ENST00000579823.1";
+        let gtf_file_path = "./test/gencode_v38.gtf";
+        let target_transcript_id = "ENST00000579823";
 
         // Read the GTF file
         let transcripts = read_annotation_file(gtf_file_path, true).expect("Failed to read GTF file");

@@ -30,7 +30,7 @@ breaks <- seq(0,3,0.025) # iterate over break width
 
 # cut the breaks
 out_ratio <- calls %>%
-  mutate(interval = cut(rel_pos, breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)) %>%
+  mutate(interval = cut(transcript_metacoordinate, breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)) %>%
   group_by(interval, filter) %>%
   summarise(n = n()) %>%
   pivot_wider(names_from = "filter", values_from = "n") %>%

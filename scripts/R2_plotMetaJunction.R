@@ -4,8 +4,8 @@
 args = commandArgs(trailingOnly=TRUE)
 
 # test if there are 5 arguments, as required for plotMetaTranscript 
-if (length(args)!=3) {
-  stop("\nUsage: Rscript R2_plotMetaTranscript.R "/path/to/annotated.bed? "/path/to/output.png", "<probability field>", "<cutoff>", "<upper/lower>", call.=FALSE)
+if (length(args)!=5) {
+  stop("\nUsage: Rscript R2_plotMetaTranscript.R \"/path/to/annotated.bed\" \"/path/to/output.png\", \"<probability field>\", \"<cutoff>\", \"<upper/lower>\"", call.=FALSE)
 }
 
 # load tidyverse, quietly 
@@ -16,7 +16,7 @@ colName = args[3]
 
 # read in annotated transcriptomic positions
 # use a function to define significant sites based on the user's 'upper' or 'lower' call 
-calls <- read_tsv(file = args[1], col_names = T, guess_max = 99999999)
+calls <- read_tsv(file = args[1], col_names = T, guess_max = -1)
 
 # select significant set based on user input 
 if (args[5] == "upper") {

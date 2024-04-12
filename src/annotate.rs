@@ -132,7 +132,7 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
         let header_fields: Vec<&str> = header.trim().split('\t').collect();
 
         let output_header = format!(
-    "{}\tgene_id\tgene_name\ttranscript_biotype\ttx_len\tcds_start\tcds_end\ttx_end\trel_pos\tabs_cds_start\tabs_cds_end\tup_junc_dist\tdown_junc_dist",
+    "{}\tgene_id\tgene_name\ttranscript_biotype\ttx_len\tcds_start\tcds_end\ttx_end\ttranscript_metacoordinate\tabs_cds_start\tabs_cds_end\tup_junc_dist\tdown_junc_dist",
     header_fields.join("\t")
 );
         writeln!(output_writer, "{}", output_header).unwrap();

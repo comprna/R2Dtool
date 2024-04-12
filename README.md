@@ -65,12 +65,12 @@ Options:
 Annotation adds the following information to the epitranscriptomic sites as additional coluumns, relying on the gene structure GTF to generate these data.
 
 ```
-transcript_biotype | gene_name | gene_id | tx_len | cds_len | utr5_len | utr3_len | cds_start | cds_end | tx_end  | rel_pos | abs_cds_start | abs_cds_end | up_junc_dist | down_junc_dist
+transcript_biotype | gene_name | gene_id | tx_len | cds_len | utr5_len | utr3_len | cds_start | cds_end | tx_end  | transcript_metacoordinate | abs_cds_start | abs_cds_end | up_junc_dist | down_junc_dist
 ```
 
 - ```tx_len```, ```cds-len```, ```utr5-len``` and ```utr3-len```represents the lengths of the entire transcript, the coding sequence, and the 5' and 3' untranslated regions (UTRs)
 - ```cds_start``` and ```cds_end``` represent the positions of the coding sequence start and end compared to the transcript.
-- ```rel_pos``` represents the scaled metatrascript position of the given RNA feature, between 0 and 3, where 0 represents transcript start-site, 1 represents CDS start, 2 represent CDS end, and 3 represents the 3' transcript end. 
+- ```transcript_metacoordinate``` represents the scaled metatrascript position of the given RNA feature, between 0 and 3, where 0 represents transcript start-site, 1 represents CDS start, 2 represent CDS end, and 3 represents the 3' transcript end. 
 - ```abs_cds_start``` and ```abs_cds_end``` represent the absolute distance (in nt) of a given feature from the cds start and end
 - ```up_junc_dist``` and ```down_junc_dist``` repreesnt the absolute distance (in nt) of a given site from the nearest upstream and downstream splice-junction contained in a given transcript
 
@@ -173,9 +173,9 @@ R2Dtool is designed to work with GTF version 2 annotations
 
 - Compatible feature types (col3) include 'transcript'/'mRNA', 'exon', 'CDS', 'five_prime_utr'/'5UTR'/'UTR' and 'three_prime_utr'/'3UTR'/'UTR'
 - 'exon', 'transcript', and 'UTR' feature types are __required__ for liftover and annotation 
-- Column 9 should contain 'transcript_id', 'gene_id', 'gene_name', and some variety of biotype attribute (e.g. 'transcript_biotype', 'transcript_type', 'gene_type', or 'gene_biotype')
+- Column 9 should optinally contain 'transcript_id', 'gene_id', 'gene_name', and some variety of biotype attribute (e.g. 'transcript_biotype', 'transcript_type', 'gene_type', or 'gene_biotype'). This data is used for R2Dtool's annotation function. 
 
-The GTF annotation provided must contain identical gene structures used to generate the transcriptome, including identical transcript names in the FASTA header. One option is to use genomes, transcriptomes and gene structures from the same genome release. Another option is for users to generate their own transcriptome using a genome and gene structure file, e.g. using gffread.  
+Critically, the GTF annotation provided __must__ contain identical gene structures used to generate the transcriptome, including identical transcript names in the FASTA header. One option is to use genomes, transcriptomes and gene structures from the same genome release. Another option is for users to generate their own transcriptome using a genome and gene structure file, e.g. using [gffread](https://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_ex).  
 
 # Utilities
 

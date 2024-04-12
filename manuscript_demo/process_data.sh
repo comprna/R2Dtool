@@ -6,6 +6,7 @@
 ##################################################
 
 # R2Dtool rust implementation 
+cd ~/R2Dtool && cargo build --release 
 export PATH="${PATH}:/home/150/as7425/R2Dtool/target/release/"
 
 # Input data corresponds to HEK293 m6A predictions, calculated against the gencode V38 transcriptome 
@@ -22,6 +23,14 @@ time r2d annotate -i "${wd}/methylation_calls.bed" -g ${annotation} -H > "${wd}/
 # liftover the annotated called to genomic coordinates 
 time r2d liftover -i "${wd}/methylation_calls_annotated.bed" -g ${annotation} -H > "${wd}/methylation_calls_annotated_lifted.bed"
 
+# plotMetaTranscript
+module load R 
+time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "${wd}/methylation_calls_annotated_lifted.bed" "${wd}/metatranscript_out.png" "probability" "0.9999" "upper"
+
+# plotMetaJunction
+time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated_lifted.bed" "${wd}/out2.png" "probability" "0.9999" "upper"
+
+
 # annotate methylation calls using Gencode v38
 time Rscript ~/R2Dtool/scripts/R2_annotate.R "${wd}/methylationCalls.bed" "${annotation}" "${wd}/methylationCalls_annotated.bed"
 # takes about 9 minutes
@@ -36,8 +45,3 @@ cat <(head -n 1 "${wd}/methylationCalls_annotated_lifted.bed") <(awk '($11>0.999
 # compress
 cat "${wd}/methylationCalls_annotated_lifted_significant.bed" | gzip -c > "${wd}/methylationCalls_annotated_lifted_significant.bed.gz"
 
-# plotMetaTranscript
-time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "~/localGadiData/2022-09-21_R2Dtool/methylationCalls_annotated_lifted.bed" "~/localGadiData/2022-09-21_R2Dtool/out.png" "probability" "0.9999" "upper"
-
-# plotMetaJunction
-time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "~/localGadiData/2022-09-21_R2Dtool/methylationCalls_annotated_lifted.bed" "~/localGadiData/2022-09-21_R2Dtool/out.png" "probability" "0.9999" "upper"
