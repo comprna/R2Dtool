@@ -73,7 +73,7 @@ meta <- merge_out %>%
   mutate(cds_start = utr5_len,
          cds_end = utr5_len + cds_len,
          tx_end = cds_end + utr3_len) %>%
-  mutate(rel_pos = ifelse(tx_coord < cds_start, # if the site is in the 5' utr
+  mutate(transcript_metacoordinate = ifelse(tx_coord < cds_start, # if the site is in the 5' utr
                           ((tx_coord)/(cds_start)), # the relative position is simply the position of the site in the UTR
                           ifelse(tx_coord < cds_end, # else, if the site is in the CDS
                                  (1 + (tx_coord - utr5_len)/(cds_len)), # the relative position is betwee 1 and 2 and represents the fraction of the cds the site is in

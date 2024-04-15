@@ -218,7 +218,7 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
             "UTR" => {
                 
                 // Construct a UTR feature similar to how you construct an Exon
-                let utr_feature = Exon {  // Assuming UTR features have a similar structure; adjust as needed
+                let utr_feature = Exon {  
                     seq_id: record.seqname().to_string(),
                     source: record.source().to_string(),
                     feature_type: record.feature_type().to_string(),
@@ -227,7 +227,7 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                     length: feature_length,
                     score: record.score().map(|s| s as f64),
                     strand: record.strand().map(|s| s.strand_symbol().to_string()).unwrap_or_else(|| ".".to_string()),
-                    frame: None, // UTRs typically do not have a frame, adjust according to your data structure
+                    frame: None, 
                     attributes: attributes.clone(),
                     feature: Some("UTR".to_string()), // Explicitly marking the feature as UTR
                 };

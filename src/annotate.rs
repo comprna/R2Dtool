@@ -1,8 +1,10 @@
-use std::fs::File;
+use std::fs::{File,OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::error::Error;
 use std::collections::HashMap;
-use crate::parse_gtf::{Transcript, read_annotation_file};
+use crate::parse_gtf::{Transcript, read_annotation_file, Exon};
+use rayon::prelude::*;
+use std::sync::{Arc, Mutex};
 
 
 #[derive(Debug, Clone)]
@@ -13,7 +15,7 @@ pub struct SpliceSite {
 
 // Additional functions to calculate missing features
 fn calculate_tx_len(utr5_len: u64, cds_len: u64, utr3_len: u64) -> u64 {
-    utr5_len + cds_len + utr3_len + 3
+    utr5_len + cds_len + utr3_len 
 }
 
 fn calculate_cds_start(utr5_len: u64) -> u64 {
@@ -47,55 +49,92 @@ fn calculate_meta_coordinates(tx_coord: u64, utr5_len: u64, cds_len: u64, utr3_l
     (rel_pos, abs_cds_start, abs_cds_end)
 }
 
-fn generate_splice_sites(transcripts: &HashMap<String, Transcript>) -> HashMap<String, Vec<SpliceSite>> {
-    let mut splice_sites_map: HashMap<String, Vec<SpliceSite>> = HashMap::new();
 
-    for (transcript_id, transcript) in transcripts {
+fn generate_splice_sites(transcripts: &HashMap<String, Transcript>) -> Arc<Mutex<HashMap<String, Vec<SpliceSite>>>> {
+    let splice_sites_map = Arc::new(Mutex::new(HashMap::new()));
+
+    let file_path = "splice_sites_map.txt";
+    let file = OpenOptions::new().write(true).create(true).truncate(true).open(file_path).expect("Unable to open file");
+    let file = Arc::new(Mutex::new(file));
+
+    transcripts.par_iter().for_each(|(transcript_id, transcript)| {
         let transcript_id_no_version = transcript_id.split('.').next().unwrap().to_string();
         let mut splice_sites: Vec<SpliceSite> = Vec::new();
+        let mut cumulative_length: u64 = 0;
 
         if !transcript.exons.is_empty() {
-            let ref exons = transcript.exons;
-            let mut cumsum_width = 0;
+            let mut exons: Vec<&Exon> = transcript.exons.iter()
+                .filter(|exon| exon.feature.as_ref().map_or(false, |ft| ft == "exon"))
+                .collect();
+
+            if transcript.strand.as_deref() == Some("+") {
+                exons.sort_by_key(|exon| exon.start);
+            } else if transcript.strand.as_deref() == Some("-") {
+                exons.sort_by_key(|exon| std::cmp::Reverse(exon.start));
+            }
 
             for (i, exon) in exons.iter().enumerate() {
-                let exon_length = exon.end - exon.start + 1;
-                cumsum_width += exon_length;
 
-                if i < exons.len() - 1 {
+                // Update cumulative length to include exon length
+                cumulative_length += exon.length;
+                if i < exons.len() - 1 {  // Ignore the last exon 
                     splice_sites.push(SpliceSite {
                         transcript_id: transcript_id_no_version.clone(),
-                        tx_coord: cumsum_width as u64,
+                        tx_coord: cumulative_length,  // Position within the transcript
                     });
                 }
+                // Debug output 
+                // println!("Transcript ID: {}, Exon Length: {}, Cumulative Length: {}", transcript_id_no_version, exon.length, cumulative_length);
             }
         }
-        splice_sites_map.insert(transcript_id_no_version, splice_sites);
-    }
+
+        // Writing to file (thread-safe)
+        let mut file = file.lock().unwrap();
+        writeln!(file, "Transcript ID: {}", transcript_id_no_version).expect("Unable to write to file");
+        for splice_site in &splice_sites {
+            writeln!(file, "Splice Site: {}", splice_site.tx_coord).expect("Unable to write to file");
+        }
+        writeln!(file).expect("Unable to write to file"); // Write a newline for better readability
+
+        let mut map = splice_sites_map.lock().unwrap();
+        map.insert(transcript_id_no_version, splice_sites);
+    });
 
     splice_sites_map
 }
 
 fn splice_site_distances(tx_coord: u64, splice_sites: &[SpliceSite]) -> (Option<i64>, Option<i64>) {
+    
+    // Initialize upstream and downstream distances as None
     let mut upstream_distance: Option<i64> = None;
     let mut downstream_distance: Option<i64> = None;
 
+    // Iterate over all splice sites
     for splice_site in splice_sites {
-        let site_distance = tx_coord as i64 - splice_site.tx_coord as i64;
+        
+        // Calculate the distance from the current transcript coordinate to the splice site
+        let site_distance = splice_site.tx_coord as i64 - tx_coord as i64;
 
-        if site_distance >= 0 {
+        // Determine if the site is upstream or downstream
+        // If site_distance is negative, the splice site is upstream
+        if site_distance < 0 {
+            let positive_distance = site_distance.abs();
+            if upstream_distance.is_none() || positive_distance < upstream_distance.unwrap() {
+                upstream_distance = Some(positive_distance);
+            }
+        }
+        // Similar logic for downstream 
+        else if site_distance > 0 {
             if downstream_distance.is_none() || site_distance < downstream_distance.unwrap() {
                 downstream_distance = Some(site_distance);
-            }
-        } else {
-            if upstream_distance.is_none() || site_distance.abs() < upstream_distance.unwrap() {
-                upstream_distance = Some(site_distance.abs());
             }
         }
     }
 
+    // Return the smallest positive distances for upstream and downstream junctions
     (upstream_distance, downstream_distance)
 }
+
 
 pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), Box<dyn Error>> {
    
@@ -174,9 +213,12 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
                 abs_cds_start = calculated_values.1.to_string();
                 abs_cds_end = calculated_values.2.to_string();
             }
-    
+
+            // Lock the mutex to safely access the shared hashmap
+            let map_lock = splice_sites.lock().expect("Failed to lock the mutex");
+
             // Handle splice sites if available
-            if let Some(splice_sites) = splice_sites.get(transcript_id) {
+            if let Some(splice_sites) = map_lock.get(transcript_id) {
                 let calculated_distances = splice_site_distances(tx_coord, splice_sites);
                 up_junc_dist = calculated_distances.0.map_or("NA".to_string(), |x| x.to_string());
                 down_junc_dist = calculated_distances.1.map_or("NA".to_string(), |x| x.to_string());
