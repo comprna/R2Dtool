@@ -69,17 +69,26 @@ merge_out <- inner_join(mappedLocus, merged_metadata, by = "transcript_id")
 
 # calculate metatranscipt coordinates
 
+library(dplyr)
+
 meta <- merge_out %>%
-  mutate(cds_start = utr5_len,
-         cds_end = utr5_len + cds_len,
-         tx_end = cds_end + utr3_len) %>%
-  mutate(transcript_metacoordinate = ifelse(tx_coord < cds_start, # if the site is in the 5' utr
-                          ((tx_coord)/(cds_start)), # the relative position is simply the position of the site in the UTR
-                          ifelse(tx_coord < cds_end, # else, if the site is in the CDS
-                                 (1 + (tx_coord - utr5_len)/(cds_len)), # the relative position is betwee 1 and 2 and represents the fraction of the cds the site is in
-                                 (2 + (tx_coord - utr5_len - cds_len) / utr3_len))),  # no final condition, the site must be in the 3' utr, similar as before but the rel_pos is between 2 and 3
-         abs_cds_start = tx_coord - cds_start, # absolute pos relative to CDS start
-         abs_cds_end = tx_coord - cds_end) # absolute pos relative to CDS end
+  mutate(
+    cds_start = utr5_len,
+    cds_end = utr5_len + cds_len,
+    tx_end = cds_end + utr3_len,
+    # Calculate transcript_metacoordinate only if the lengths are all greater than zero
+    transcript_metacoordinate = ifelse(
+      utr5_len > 0 & cds_len > 0 & utr3_len > 0,
+      ifelse(tx_coord < cds_start,  # If the site is in the 5' UTR
+        tx_coord / cds_start,  # The relative position in the 5' UTR
+        ifelse(tx_coord < cds_end,  # Else, if the site is in the CDS
+          1 + (tx_coord - utr5_len) / cds_len,  # The relative position in the CDS
+          2 + (tx_coord - utr5_len - cds_len) / utr3_len)),  # In the 3' UTR
+      NA_real_  # Return NA if any length is zero or missing
+    ),
+    abs_cds_start = tx_coord - cds_start,  # Absolute position relative to CDS start
+    abs_cds_end = tx_coord - cds_end  # Absolute position relative to CDS end
+  )
 
 ##################################################
 

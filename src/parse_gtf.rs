@@ -39,6 +39,7 @@ pub struct Transcript {
     pub chromosome: String,
     pub cds_starts: Vec<u64>,
     pub cds_ends: Vec<u64>,
+    pub transcript_length: Option<u64>, 
 }
 
 // Set default traits for transcripts 
@@ -59,6 +60,7 @@ impl Default for Transcript {
             chromosome: String::new(),    
             cds_starts: Vec::new(),
             cds_ends: Vec::new(),
+            transcript_length: None,
         }
     }
 }
@@ -184,6 +186,7 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                             chromosome,
                             cds_starts: Vec::new(),
                             cds_ends: Vec::new(),
+                            transcript_length: None,
                         };
                         entry.insert(transcript);
                         debug!("Created new transcript: {}", transcript_id);
@@ -263,6 +266,7 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                             chromosome,
                             cds_starts: Vec::new(),
                             cds_ends: Vec::new(),
+                            transcript_length: None,
                         };
                         entry.insert(transcript);
                         debug!("Created new transcript with UTR: {}", transcript_id);
@@ -279,25 +283,39 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
     debug!("Number of transcripts parsed: {}", transcripts.len());
 
     for transcript in transcripts.values_mut() {
-        transcript.exons.sort_by_key(|exon| exon.start);
-
-        if transcript.exons.len() > 1 {
-            for i in 0..(transcript.exons.len() - 1) {
-                let splice_pos = transcript.exons[i].end + 1;
+        
+        // First, ensure only exon features are considered for splice junctions
+        let mut exon_features: Vec<&Exon> = transcript.exons.iter()
+            .filter(|exon| exon.feature.as_ref().map_or(false, |ft| ft == "exon"))
+            .collect();
+    
+        // Sort by start position to ensure the correct order for calculating splice positions
+        exon_features.sort_by_key(|exon| exon.start);
+    
+        // Calculate splice junction positions based on sorted exons
+        if exon_features.len() > 1 {
+            for i in 0..(exon_features.len() - 1) {
+                let splice_pos = exon_features[i].end + 1; // Position after the end of the current exon
                 transcript.splice_junction_positions.push(splice_pos);
             }
         }
-
+    
+        // Calculate the total length of the transcript based on exon lengths
+        let total_exon_length: u64 = exon_features
+            .iter()
+            .map(|exon| exon.length)
+            .sum();
+        transcript.transcript_length = Some(total_exon_length);
+    
         check_transcript_length(transcript);
     }
-
+    
     if !ignored_features.is_empty() {
         warn!("Ignored the following annotation features:");
         for (feature_type, count) in ignored_features {
             warn!("- {}: {} occurrences", feature_type, count);
         }
     }
-    
     
     // Post-processing: Calculate UTR lengths based on their position relative to CDS
     // for transcript in transcripts.values_mut() {

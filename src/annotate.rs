@@ -13,21 +13,12 @@ pub struct SpliceSite {
     pub tx_coord: u64,
 }
 
-// Additional functions to calculate missing features
-fn calculate_tx_len(utr5_len: u64, cds_len: u64, utr3_len: u64) -> u64 {
-    utr5_len + cds_len + utr3_len 
-}
-
 fn calculate_cds_start(utr5_len: u64) -> u64 {
     utr5_len
 }
 
 fn calculate_cds_end(utr5_len: u64, cds_len: u64) -> u64 {
     utr5_len + cds_len
-}
-
-fn calculate_tx_end(utr5_len: u64, cds_len: u64, utr3_len: u64) -> u64 {
-    utr5_len + cds_len + utr3_len
 }
 
 fn calculate_meta_coordinates(tx_coord: u64, utr5_len: u64, cds_len: u64, utr3_len: u64) -> (f64, i64, i64) {
@@ -151,8 +142,8 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
     let annotations = read_annotation_file(&gtf_file, true)?;
     
     // Print the annotations in a table
-    // eprintln!("Previewing transcript annotations\n");
-    // preview_annotations(&annotations);
+    eprintln!("Previewing transcript annotations\n");
+    preview_annotations(&annotations);
 
     let transcripts = annotations;
 
@@ -187,7 +178,7 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
         if let Some(transcript) = transcripts.get(transcript_id) {
             
             // Initialize all fields to "NA"
-            let mut tx_len = "NA".to_string();
+            let tx_len;
             let mut cds_start = "NA".to_string();
             let mut cds_end = "NA".to_string();
             let mut tx_end = "NA".to_string();
@@ -202,12 +193,11 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
             let gene_name = transcript.gene_name.clone().unwrap_or_else(|| "NA".to_string());
             let biotype = transcript.biotype.clone().unwrap_or_else(|| "NA".to_string());
     
-            // Calculate transcript length if possible
+            tx_len = transcript.transcript_length.map_or("NA".to_string(), |len| len.to_string());
             if let (Some(utr5_len), Some(cds_len), Some(utr3_len)) = (transcript.utr5_len, transcript.cds_len, transcript.utr3_len) {
-                tx_len = calculate_tx_len(utr5_len, cds_len, utr3_len).to_string();
                 cds_start = calculate_cds_start(utr5_len).to_string();
                 cds_end = calculate_cds_end(utr5_len, cds_len).to_string();
-                tx_end = calculate_tx_end(utr5_len, cds_len, utr3_len).to_string();
+                tx_end = tx_len.clone();
                 let calculated_values = calculate_meta_coordinates(tx_coord, utr5_len, cds_len, utr3_len);
                 rel_pos = format!("{:.5}", calculated_values.0);
                 abs_cds_start = calculated_values.1.to_string();
@@ -253,6 +243,7 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
     }    
     Ok(())
 }
+
 
 pub fn preview_annotations(annotations: &HashMap<String, Transcript>) {
     eprintln!("Number of annotations: {}", annotations.len()); 
