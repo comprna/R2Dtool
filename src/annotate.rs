@@ -142,8 +142,8 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
     let annotations = read_annotation_file(&gtf_file, true)?;
     
     // Print the annotations in a table
-    eprintln!("Previewing transcript annotations\n");
-    preview_annotations(&annotations);
+    // eprintln!("Previewing transcript annotations\n");
+    // preview_annotations(&annotations);
 
     let transcripts = annotations;
 

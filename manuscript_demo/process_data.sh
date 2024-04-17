@@ -24,12 +24,13 @@ export PATH="${PATH}:/home/150/as7425/R2Dtool/target/release/"
 # annotate the methylation calls against gencode v38 
 
 # subset annotation 
-target="ENST00000286448"
-cat /g/data/lf10/as7425/genomes/human_genome/gencode/gencode_v38/gencode.v38.annotation.gtf | grep $target > /home/150/as7425/R2Dtool/test/gencode_v38.gtf
-annotation="/home/150/as7425/R2Dtool/test/gencode_v38.gtf"
+# target="ENST00000286448.12"
+# # cat /g/data/lf10/as7425/genomes/human_genome/gencode/gencode_v38/gencode.v38.annotation.gtf | grep $target > /home/150/as7425/R2Dtool/test/gencode_v38.gtf
+# cat /g/data/lf10/as7425/genomes/human_genome/gencode/gencode_v38/gencode.v38.annotation.gtf | grep $target | awk '($3 == "exon")' | grep "ENST00000286448.12" > /home/150/as7425/R2Dtool/test/gencode_v38.gtf
+# annotation="/home/150/as7425/R2Dtool/test/gencode_v38.gtf"
 
 # build 
-cd ~/R2Dtool && rm -rf target && cargo build --release 
+# cd ~/R2Dtool && rm -rf target && cargo build --release 
 cd $wd; rm splice_sites_map.txt 2>/dev/null
 time r2d annotate -i "${wd}/methylation_calls.bed" -g ${annotation} -H > "${wd}/methylation_calls_annotated.bed"
 cat <(head -n 1  "${wd}/methylation_calls_annotated.bed") <(cat  "${wd}/methylation_calls_annotated.bed" | grep "ENST00000008876" | head)

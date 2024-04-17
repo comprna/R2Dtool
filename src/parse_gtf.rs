@@ -75,6 +75,7 @@ pub fn parse_gff_attributes(attributes: &MultiMap<String, String>) -> HashMap<St
 pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<String, Transcript>, Box<dyn std::error::Error>> {
     let mut transcripts: HashMap<String, Transcript> = HashMap::new();
     let mut ignored_features: HashMap<String, u32> = HashMap::new();
+    let mut skipped_par_genes = HashSet::new(); // Do not read _PAR_ genes 
 
     let mut reader = if is_gtf {
         gff::Reader::from_file(file_path, gff::GffType::GTF2)?
@@ -112,6 +113,13 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
         let transcript_id_attr = if is_gtf { "transcript_id" } else { "ID" };
         let gene_id_attr = if is_gtf { "gene_id" } else { "Parent" };
 
+        // Skip reading PAR genes 
+        if let Some(gene_id) = attributes.get(gene_id_attr) {
+            if gene_id.contains("_PAR_") {
+                skipped_par_genes.insert(gene_id.clone()); // Add gene_id to the set if _PAR_ is found
+                continue; 
+            }
+        } 
         let transcript_id_with_version = match attributes.get(transcript_id_attr) {
             Some(id) => id,
             None => {
@@ -412,6 +420,8 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
     
     
     debug!("Finished parsing annotation file.");
+
+    eprintln!("Skipped {} unique genes with '_PAR_' in their identifiers while parsing GTF", skipped_par_genes.len()); // Logging the count of unique skipped genes
 
     Ok(transcripts)
 }

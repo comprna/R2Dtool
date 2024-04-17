@@ -187,6 +187,7 @@ R2Dtool is designed to work with GTF version 2 annotations
 - Compatible feature types (col3) include 'transcript'/'mRNA', 'exon', 'CDS', 'five_prime_utr'/'5UTR'/'UTR' and 'three_prime_utr'/'3UTR'/'UTR'
 - 'exon', 'transcript', and 'UTR' feature types are __required__ for liftover and annotation 
 - Column 9 should optinally contain 'transcript_id', 'gene_id', 'gene_name', and some variety of biotype attribute (e.g. 'transcript_biotype', 'transcript_type', 'gene_type', or 'gene_biotype'). This data is used for R2Dtool's annotation function. 
+- Transcripts that are duplicated between autosomal loci and PAR regions are assigned only to autosomal regions (_PAR_ gene entries are skipped by R2Dtool)
 
 Critically, the GTF annotation provided __must__ contain identical gene structures used to generate the transcriptome, including identical transcript names in the FASTA header. One option is to use genomes, transcriptomes and gene structures from the same genome release. Another option is for users to generate their own transcriptome using a genome and gene structure file, e.g. using [gffread](https://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_ex).  
 
@@ -200,9 +201,6 @@ Critically, the GTF annotation provided __must__ contain identical gene structur
 bash cheui_to_bed.sh [cheui model II output file] [cheui_to_bed output file]
 ```
 
-# General notes
-- Transcriptome to genome liftover relies only on transcript_id, site coordinates, and strand (columns 1:3,6)
-- The annotation used must correspond exactly to the transcriptome used
 
 
 
