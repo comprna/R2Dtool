@@ -52,7 +52,7 @@ export wd="/g/data/lf10/as7425/R2DTool_demo/"; mkdir -p ${wd}; cd $wd
 module load R 
 
 # Rust version of annotate 
-time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "${wd}/methylation_calls_annotated.bed" "${wd}/metatranscript_out_Rust.png" "probability" "0.9999" "upper" -c binom -l -o "${wd}/transcript_data_Rust.tsv"
+time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "${wd}/methylation_calls_annotated.bed" "${wd}/metatranscript_out_Rust.png" "probability" "0.9999" "upper" -c loess -l -o "${wd}/transcript_data_Rust.tsv"
 
 # R version of annotate 
 time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "${wd}/methylation_calls_annotated_R.bed" "${wd}/metatranscript_out_R.png" "probability" "0.9999" "upper" -c loess -l -o "${wd}/transcript_data_R.tsv"
@@ -63,8 +63,24 @@ time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "${wd}/methylation_calls_
 # plotMetaJunction
 module load R 
 export wd="/g/data/lf10/as7425/R2DTool_demo/"; mkdir -p ${wd}; cd $wd
-time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated_lifted.bed" "${wd}/metajunction_out.png" "probability" "0.9999" "upper"
-time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated_lifted.bed" "${wd}/metajunction_out_binom.png" "probability" "0.9999" "upper" -c binom  
+
+# time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated_lifted.bed" "${wd}/metajunction_out.png" "probability" "0.9999" "upper"
+
+time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated.bed" "${wd}/metajunction_out_binom_rust.png" "probability" "0.9999" "upper" -c binom  
+
+time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated_R.bed" "${wd}/metajunction_out_binom_R.png" "probability" "0.9999" "upper" -c binom  
+
+
+##################################################
+
+# plot metacodon 
+# plotMetaJunction
+module load R 
+export wd="/g/data/lf10/as7425/R2DTool_demo/"; mkdir -p ${wd}; cd $wd
+
+time Rscript ~/R2Dtool/scripts/R2_plotMetaCodon.R -s -l "${wd}/methylation_calls_annotated.bed" "${wd}/metacodon_out_binom_rust_start.png" "probability" "0.9999" "upper"
+
+time Rscript ~/R2Dtool/scripts/R2_plotMetaCodon.R -e -l "${wd}/methylation_calls_annotated.bed" "${wd}/metacodon_out_binom_rust_end.png" "probability" "0.9999" "upper"
 
 
 # annotate methylation calls using Gencode v38

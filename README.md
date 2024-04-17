@@ -103,6 +103,23 @@ Optional arguments:
 
 
 
+**Plot** the **metacodon** distribution of RNA features:
+
+```
+Rscript R2_plotMetaCodon.R [start/stop codon] [options] <input_file> <output_file> <field_name> <cutoff_value> <cutoff_type>
+
+Mandatory positional arguments: 
+- -s or -e to indicate start or stop codon 
+- input_file: Path to the annotated transcriptomic sites file.
+- output_file: Path where the plot will be saved (include file extension, e.g., .png or .svg).
+- field_name: The name of the column in input_file used to filter significant sites.
+- cutoff_value: Numeric value defining the threshold for significance.
+- cutoff_type: Specifies the comparison direction, either "lower" or "upper", to determine significance.
+
+Optional arguments: 
+- The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
+- The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metacodon data as a tab-separated file 
+
 **Plot** the **metajunction** distribution of RNA features:
 
 ```
@@ -119,6 +136,7 @@ Mandatory positional arguments:
 Optional arguments: 
 - The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
 - The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metajunction data as a tab-separated file 
+
 
 ```
 # Installation and dependencies 
@@ -187,7 +205,7 @@ R2Dtool is designed to work with GTF version 2 annotations
 - Compatible feature types (col3) include 'transcript'/'mRNA', 'exon', 'CDS', 'five_prime_utr'/'5UTR'/'UTR' and 'three_prime_utr'/'3UTR'/'UTR'
 - 'exon', 'transcript', and 'UTR' feature types are __required__ for liftover and annotation 
 - Column 9 should optinally contain 'transcript_id', 'gene_id', 'gene_name', and some variety of biotype attribute (e.g. 'transcript_biotype', 'transcript_type', 'gene_type', or 'gene_biotype'). This data is used for R2Dtool's annotation function. 
-- Transcripts that are duplicated between autosomal loci and PAR regions are assigned only to autosomal regions (_PAR_ gene entries are skipped by R2Dtool)
+- Transcripts that are duplicated between autosomal loci and PAR regions are assigned only to autosomal regions (_PAR_ gene entries are skipped by)
 
 Critically, the GTF annotation provided __must__ contain identical gene structures used to generate the transcriptome, including identical transcript names in the FASTA header. One option is to use genomes, transcriptomes and gene structures from the same genome release. Another option is for users to generate their own transcriptome using a genome and gene structure file, e.g. using [gffread](https://ccb.jhu.edu/software/stringtie/gff.shtml#gffread_ex).  
 
