@@ -163,6 +163,8 @@ export PATH="$PATH:$(pwd)/target/release/"
 
 # liftover transcriptomic sites to genomic coordinates
 mkdir ./test/outputs/ 2>/dev/null
+cd test && bash ../scripts/cheui_to_bed.sh ./CHEUI_modelII_subset.txt ./out_CHEUI_modelII.bed
+cd ~/R2Dtool
 time r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/out_CHEUI_modelII.bed > ./test/outputs/liftover.bed
 head ./test/outputs/liftover.bed
 
@@ -212,3 +214,30 @@ cat $annotation | grep "ENST00000579823.1" > ~/R2Dtool/test/temp/gecode_test.gtf
 # see how the transcript is parsed 
 cd ~/R2Dtool 
 cargo test test_print_all_transcript_info -- --nocapture 
+
+################################################################################
+
+# compile from source and run liftover
+cd ~/R2Dtool 
+cargo build --release 
+export PATH="$PATH:$(pwd)/target/release/"
+
+printf "transcript\tstart\tend\tname\tscore\tstrand\n" > ./test/mouse_in.bed
+printf "ENSMUST00000156690\t0\t1\ta\ta\t+\n" >> ./test/mouse_in.bed
+time r2d liftover -H -g ./test/GRCm39_subset.gtf -i ./test/mouse_in.bed > ./test/outputs/liftover.bed
+
+# liftover transcriptomic sites to genomic coordinates
+mkdir ./test/outputs/ 2>/dev/null
+cd test && bash ../scripts/cheui_to_bed.sh ./CHEUI_modelII_subset.txt ./out_CHEUI_modelII.bed
+cd ~/R2Dtool
+
+head ./test/outputs/liftover.bed
+
+# make a 6-col bedfile without header for bedtools
+tail -n +2 ./test/outputs/liftover.bed | cut -f1-6 > ./test/outputs/liftover.bed6
+
+# check that all sites are lifted over to 'A'
+export genome="/g/data/lf10/as7425/genomes/mouse_genome/GRCm39/Mus_musculus.GRCm39.dna.primary_assembly.fa"
+bedtools getfasta -s -fi ${genome} -bed ./test/outputs/liftover.bed6 | tail -n +2 | awk 'NR%2==1' | sort | uniq -c | sort -nr > ./test/outputs/liftover_sequence_context.txt
+cat ./test/outputs/liftover_sequence_context.txt
+

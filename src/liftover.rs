@@ -29,17 +29,24 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
 
     // Check if there is a transcript associated with the given transcript_id
     if let Some(transcript) = annotations.get(transcript_id) {
-        let exons = if transcript.strand.as_deref() == Some("-") {
-            transcript.exons.iter().rev().collect::<Vec<_>>()
+        // Sort exons based on their start position and strand orientation
+        let mut exons = transcript.exons.clone(); // Clone to avoid mutating original data
+        if transcript.strand.as_deref() == Some("-") {
+            // For negative strand, sort descending by start
+            exons.sort_by(|a, b| b.start.cmp(&a.start));
         } else {
-            transcript.exons.iter().collect::<Vec<_>>()
-        };
+            // For positive strand or undefined, sort ascending by start
+            exons.sort_by(|a, b| a.start.cmp(&b.start));
+        }
 
         // Iterate through each exon in the transcript
         for exon_data in &exons {
 
             // Calculate the exon length
             let exon_length = exon_data.end - exon_data.start + 1;
+            // Print exon start and end positions
+            // println!("Exon start: {}, Exon end: {}, Exon length: {}", exon_data.start, exon_data.end, exon_length);
+
 
             // Check if the current exon contains the transcriptomic position
 
@@ -49,7 +56,7 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
                 let genomic_position = if transcript.strand.as_deref() == Some("+") {
                     position - current_position + exon_data.start - 1
                 } else {
-                    exon_data.end - (position - current_position + 2) + 1
+                    exon_data.end - (position - current_position) - 1
                 };
 
                 // Get the chromosome name
