@@ -219,6 +219,7 @@ cargo test test_print_all_transcript_info -- --nocapture
 
 # compile from source and run liftover
 cd ~/R2Dtool 
+cargo test -- --nocapture
 cargo build --release 
 export PATH="$PATH:$(pwd)/target/release/"
 

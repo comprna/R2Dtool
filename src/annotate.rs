@@ -241,6 +241,11 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
             }
         }
     }    
+    let file_path = "splice_sites_map.txt";
+    if let Err(e) = fs::remove_file(file_path) {
+        eprintln!("Failed to delete file '{}': {:?}", file_path, e);
+    }
+
     Ok(())
 }
 
