@@ -9,8 +9,8 @@ export wd="/g/data/lf10/as7425/R2DTool_demo"; mkdir -p ${wd} 2>/dev/null
 export reads="/g/data/lf10/as7425/2023_mrna-biogenesis-maps/analysis/2024-03-28_ASR012_HeLa-total-RNA004-rep1/ASR012_HeLa-total-RNA004-rep1_dorado_polyA_m6A_all_reads.fastq"
 export genome="/g/data/lf10/as7425/genomes/human_genome/ensembl_release_110/Homo_sapiens.GRCh38.cdna.all.fa"
 
-# map to genome
-minimap2 -ax map-ont -y -k 14 -N 10 ${genome} ${reads} -t 104 | samtools view -bh > ${wd}/aligned_reads.bam
+# map to transcriptome
+minimap2 -ax map-ont -y -k 14 -N 20 ${genome} ${reads} -t 104 | samtools view -bh > ${wd}/aligned_reads.bam
 
 # filter for primary alignments with nonzero mapq
 samtools view -b -F 2308 -@ 104 -q 1 ${wd}/aligned_reads.bam | samtools sort > ${wd}/primary.bam
@@ -22,7 +22,6 @@ export PATH="$PATH:/g/data/lf10/as7425/apps/modkit/target/release"
 modkit pileup -t 104 ${wd}/primary.bam "${wd}/pileup.bed" --log-filepath "${wd}/pileup.bed.log"
 
 # prepare for R2Dtool 
-# Prepare for R2Dtool
 printf "transcript\tstart\tend\tmod\tcov\tstrand\tstart\tend\tcolor\tX1\tX2\tcov\tfrac_mod\tn_mod\tn_canonical\tn_other_mod\tn_delete\tn_fail\tn_diff\tn_no_call\n" > ${wd}/R2D_input.bed
 awk 'BEGIN {FS=OFS="\t"} {gsub(",", OFS, $0); $9="."; print}' "${wd}/pileup.bed" | tr " " "\t" | awk '($12 > 9)' >> ${wd}/R2D_input.bed
 

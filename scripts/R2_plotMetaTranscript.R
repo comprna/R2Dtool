@@ -159,4 +159,4 @@ if (!is.null(output_path)) {
 p <- plot_ratio(out_ratio, ci_method, add_labels)
 
 # save the plot
-ggsave(output_file, p, scale = 4, width = 850, height = 750, units = c("px"))
+ggsave(output_file, p, scale = 4, width = 600, height = 400, units = c("px"))
