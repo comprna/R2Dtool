@@ -72,7 +72,7 @@ pub fn parse_gff_attributes(attributes: &MultiMap<String, String>) -> HashMap<St
 
 // Read annotation file 
 // TODO: Implement parsing for GFF3 files, when is_gtf = False 
-pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<String, Transcript>, Box<dyn std::error::Error>> {
+pub fn read_annotation_file(file_path: &str, is_gtf: bool, has_version: bool) -> Result<HashMap<String, Transcript>, Box<dyn std::error::Error>> {
     let mut transcripts: HashMap<String, Transcript> = HashMap::new();
     let mut ignored_features: HashMap<String, u32> = HashMap::new();
     let mut skipped_par_genes = HashSet::new(); // Do not read _PAR_ genes 
@@ -127,14 +127,19 @@ pub fn read_annotation_file(file_path: &str, is_gtf: bool) -> Result<HashMap<Str
                 continue;
             }
         };
-        let transcript_id = match transcript_id_with_version.split('.').next() {
-            Some(id) => id.to_string(),
-            None => {
-                warn!("Invalid transcript ID format: {}. Skipping...", transcript_id_with_version);
-                continue;
+        
+        let transcript_id = if has_version {
+            transcript_id_with_version.to_string()
+        } else {
+            match transcript_id_with_version.split('.').next() {
+                Some(id) => id.to_string(),
+                None => {
+                    warn!("Invalid transcript ID format: {}. Skipping...", transcript_id_with_version);
+                    continue;
+                }
             }
         };
-
+        
         debug!("Transcript ID: {}", transcript_id);
 
         if *record.start() > *record.end() {

@@ -40,6 +40,13 @@ fn main() {
                     .action(clap::ArgAction::SetTrue)
                 )
                 .arg(
+                    Arg::new("transcript-version")
+                    .short('t')
+                    .long("transcript-version")
+                    .help("Retain transcript version information (. delimited) in col 1")
+                    .action(clap::ArgAction::SetTrue)
+                )
+                .arg(
                     Arg::new("output")
                     .short('o')
                     .long("output")
@@ -81,6 +88,13 @@ fn main() {
                     .action(clap::ArgAction::SetTrue)
                 )
                 .arg(
+                    Arg::new("transcript-version")
+                    .short('t')
+                    .long("transcript-version")
+                    .help("Retain transcript version information (. delimited) in col 1")
+                    .action(clap::ArgAction::SetTrue)
+                )
+                .arg(
                     Arg::new("output")
                     .short('o')
                     .long("output")
@@ -100,11 +114,11 @@ fn main() {
     // Handle the liftover subcommand
     if let Some(liftover_matches) = matches.subcommand_matches("liftover") {
         let has_header = liftover_matches.get_flag("header");
-        
+        let has_version = liftover_matches.get_flag("transcript-version");
         
         eprintln!("Running liftover...");
 
-        if let Err(e) = liftover::run_liftover(liftover_matches, has_header) {
+        if let Err(e) = liftover::run_liftover(liftover_matches, has_header, has_version) {
             eprintln!("Error running liftover: {}", e);
         }
     }
@@ -113,10 +127,11 @@ fn main() {
     // Handle the annotate subcommand
     if let Some(annotate_matches) = matches.subcommand_matches("annotate") {
         let has_header = annotate_matches.get_flag("header");
-        
+        let has_version = annotate_matches.get_flag("transcript-version");
+
         eprintln!("Running annotate...");
         
-        if let Err(e) = annotate::run_annotate(annotate_matches, has_header) {
+        if let Err(e) = annotate::run_annotate(annotate_matches, has_header, has_version) {
             eprintln!("Error running annotate: {}", e);
         }
     }

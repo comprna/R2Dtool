@@ -42,7 +42,7 @@ Arguments:
 Options:
     -H, --header: Indicates the input file has a header, which will be preserved in the output [Default: False]
     -o, --output <OUTPUT>: Path to output file [Default: STDOUT]
-
+    -t, --transscript-version: Indicates that '.'-delimited transcript version information is present in col1 and should be considered during liftover [default: False].
 ```
 - Liftover prepends 6 columns to the input file, containing the genome coordinates of the transcript features in BED format
 - All data in the original input are preserved in the output and shifted by 6 columns 
@@ -59,6 +59,7 @@ Arguments:
 Options:
     -H, --header: Indicates the input file has a header, which will be preserved in the output [Default: False]
     -o, --output <OUTPUT>: Path to output file [Default: STDOUT]
+    -t, --transscript-version: Indicates that '.'-delimited transcript version is present in col1 and should be considered during annotation [default: False].
 
 ```
 

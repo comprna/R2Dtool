@@ -128,7 +128,7 @@ fn splice_site_distances(tx_coord: u64, splice_sites: &[SpliceSite]) -> (Option<
 }
 
 
-pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), Box<dyn Error>> {
+pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool, has_version: bool) -> Result<(), Box<dyn Error>> {
    
     // eprintln!("Running the annotate functionality...");
    
@@ -140,7 +140,7 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
     // TODO: implement GFF3 parsing         
     // let default_format = String::from("gtf");
     // let format = matches.get_one("format").unwrap_or(&default_format);
-    let annotations = read_annotation_file(&gtf_file, true)?;
+    let annotations = read_annotation_file(&gtf_file, true, has_version)?;
     
     // Print the annotations in a table
     // eprintln!("Previewing transcript annotations\n");
@@ -173,7 +173,15 @@ pub fn run_annotate(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
         let line = line.unwrap();
         let fields: Vec<&str> = line.split('\t').collect();
         let transcript_id_with_version = fields[0];
-        let transcript_id = transcript_id_with_version.split('.').next().unwrap();
+
+
+        let transcript_id = if has_version {
+            transcript_id_with_version
+        } else {
+            transcript_id_with_version.split('.').next().unwrap()
+        };
+    
+
         let tx_coord: u64 = fields[1].parse().unwrap();
     
         if let Some(transcript) = transcripts.get(transcript_id) {

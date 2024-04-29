@@ -8,6 +8,8 @@ use std::collections::HashMap;
 pub fn convert_transcriptomic_to_genomic_coordinates(
     site_fields: &[&str], // input: tab-separated transcriptome position fields
     annotations: &HashMap<String, Transcript>, // input: parsed annotation object
+    has_version: bool
+
 ) -> Option<String> { // return type: Option<String), either Some(String) or None
     
     // Check if there are at least 4 fields in site_fields
@@ -18,8 +20,11 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
     // Extract the transcript ID with version from the first field
     let transcript_id_with_version = site_fields[0];
 
-    // Remove the version from transcript ID
-    let transcript_id = transcript_id_with_version.split('.').next().unwrap();
+    let transcript_id = if has_version {
+        transcript_id_with_version
+    } else {
+        transcript_id_with_version.split('.').next().unwrap()
+    };
 
     // Parse the transcriptomic position (second field) as u64
     let position: u64 = site_fields[1].parse().unwrap();
@@ -85,11 +90,11 @@ pub fn convert_transcriptomic_to_genomic_coordinates(
     None
 }
 
-pub fn run_liftover(matches: &clap::ArgMatches, has_header: bool) -> Result<(), Box<dyn Error>> {
+pub fn run_liftover(matches: &clap::ArgMatches, has_header: bool, has_version: bool) -> Result<(), Box<dyn Error>> {
 
     // TODO: implement format matching for GFF3 file parsing 
     // let default_format = String::from("gtf");
-    //let format = matches.get_one("format").unwrap_or(&default_format);
+    // let format = matches.get_one("format").unwrap_or(&default_format);
 
     let gtf_file: String = matches.get_one::<String>("gtf").unwrap().to_string();
     let input_file: String = matches.get_one::<String>("input").unwrap().to_string();
@@ -97,7 +102,7 @@ pub fn run_liftover(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
     
     // By default, read in the annotations as GTF file
     // TODO: implement GFF3 parsing 
-    let annotations = read_annotation_file(&gtf_file, true)?;
+    let annotations = read_annotation_file(&gtf_file, true, has_version)?;
 
     // Print the annotations in a table
     // eprintln!("Previewing transcript annotations\n");
@@ -132,7 +137,7 @@ pub fn run_liftover(matches: &clap::ArgMatches, has_header: bool) -> Result<(), 
         if let Err(e) = site_fields[1].parse::<u64>() {
             eprintln!("Error parsing position from line: '{}'\nError: {}", line.trim(), e);
         } else if let Some(genomic_coordinates) =
-        convert_transcriptomic_to_genomic_coordinates(&site_fields, &annotations)
+        convert_transcriptomic_to_genomic_coordinates(&site_fields, &annotations, has_version)
         {
             if let Err(_) = writeln!(output_writer, "{}", genomic_coordinates) {
                 break;
