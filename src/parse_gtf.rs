@@ -481,7 +481,7 @@ mod tests {
     fn test_read_gtf_file() {
         init();
         let gtf_file = Path::new("./test/GRCm39_subset.gtf");
-        let transcripts = read_annotation_file(gtf_file.to_str().unwrap(), true).unwrap();
+        let transcripts = read_annotation_file(gtf_file.to_str().unwrap(), true, false).unwrap();
 
         assert!(!transcripts.is_empty());
         // TODO: Add assertions to check the expected behavior and results
@@ -496,7 +496,7 @@ mod tests {
         let target_transcript_id = "ENST00000579823";
 
         // Read the GTF file
-        let transcripts = read_annotation_file(gtf_file_path, true).expect("Failed to read GTF file");
+        let transcripts = read_annotation_file(gtf_file_path, true, false).expect("Failed to read GTF file");
         
         // Check if the target transcript ID is present and print its details
         if let Some(transcript) = transcripts.get(target_transcript_id) {
@@ -520,7 +520,7 @@ mod tests {
         let gtf_file_path = "./test/gencode_v38.gtf";
 
         // Read the GTF file
-        let transcripts = read_annotation_file(gtf_file_path, true).expect("Failed to read GTF file");
+        let transcripts = read_annotation_file(gtf_file_path, true, false).expect("Failed to read GTF file");
 
         // Iterate over all transcripts and print their details
         for (transcript_id, transcript) in transcripts.iter() {
