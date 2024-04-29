@@ -1,101 +1,76 @@
-#!/bin/bash
+#!/bin/bash 
 
-# Written by AJ Sethi on 2022-09-08
-# Last modified on 2024-04-09 using R2Dtool v2.0.0 
+# using minimap v2.1 and samtools v1.19
+export PATH="$PATH:/g/data/lf10/as7425/apps/minimap2/"
+module load samtools
+
+# map hela DRS reads to GRCh38 cDNA transcriptome
+export wd="/g/data/lf10/as7425/R2DTool_demo"; mkdir -p ${wd} 2>/dev/null
+export reads="/g/data/lf10/as7425/2023_mrna-biogenesis-maps/analysis/2024-03-28_ASR012_HeLa-total-RNA004-rep1/ASR012_HeLa-total-RNA004-rep1_dorado_polyA_m6A_all_reads.fastq"
+export genome="/g/data/lf10/as7425/genomes/human_genome/ensembl_release_110/Homo_sapiens.GRCh38.cdna.all.fa"
+
+minimap2 -ax map-ont -y -k 14 -N 20 ${genome} ${reads} -t 104 | samtools view -bh > ${wd}/aligned_reads.bam
+
+# filter for plus strand primary alignments with nonzero mapq
+samtools view -b -F 2308 -@ 104 -q 1 ${wd}/aligned_reads.bam | samtools sort > ${wd}/primary.bam
+samtools view -@ 104 -c ${wd}/primary.bam
+samtools index ${wd}/primary.bam
+
+# pileup the modification calls using modkit 
+export PATH="$PATH:/g/data/lf10/as7425/apps/modkit/target/release"
+modkit pileup -t 104 ${wd}/primary.bam "${wd}/pileup.bed" --log-filepath "${wd}/pileup.bed.log"
+
+# convert to table with header for R2Dtool 
+# filter for coverage >=10
+printf "transcript\tstart\tend\tmod\tcov\tstrand\tstart\tend\tcolor\tX1\tX2\tcov\tfrac_mod\tn_mod\tn_canonical\tn_other_mod\tn_delete\tn_fail\tn_diff\tn_no_call\n" > ${wd}/R2D_input.bed
+awk 'BEGIN {FS=OFS="\t"} {gsub(",", OFS, $0); $9="."; print}' "${wd}/pileup.bed" | tr " " "\t" | awk '($12 > 9)' >> ${wd}/R2D_input.bed
+
+# verify that all sites mapped to 'A' nucleotide as expected
+export wd="/g/data/lf10/as7425/R2DTool_demo"; mkdir -p ${wd} 2>/dev/null
+export genome="/g/data/lf10/as7425/genomes/human_genome/ensembl_release_110/Homo_sapiens.GRCh38.cdna.all.fa"
+tail -n +2 ${wd}/R2D_input.bed > ${wd}/R2D_input_noheader.bed
+bedtools getfasta -s -fi ${genome} -bed ${wd}/R2D_input_noheader.bed | tail -n +2 | awk 'NR%2==1' | sort | uniq -c | sort -nr > ${wd}/input_sequence_context.txt
+cat ${wd}/input_sequence_context.txt
+
+# 336160 A
+#     782 T
+#     333 G
+#     300 C
+
 
 ##################################################
 
-# setup
+# run R2Dtool 
 
-# Input data corresponds to HEK293 m6A predictions, calculated against the gencode V38 transcriptome 
-export methylation_calls="/g/data/xc17/pm1122/xpore_hek293/results/HEK293T-WT_CHEUI_predictions_site_level_WT.txt"
-export annotation="/g/data/lf10/as7425/genomes/human_genome/gencode/gencode_v38/gencode.v38.annotation.gtf"
-export wd="/g/data/lf10/as7425/R2DTool_demo/"; mkdir -p ${wd}
-
-# convert cheui data to bed-like
-bash ~/R2Dtool/scripts/cheui_to_bed.sh ${methylation_calls} "${wd}/methylation_calls.bed"
+export wd="/g/data/lf10/as7425/R2DTool_demo";
+export sites="${wd}/R2D_input.bed"
+export anno="/g/data/lf10/as7425/genomes/human_genome/ensembl_release_110/Homo_sapiens.GRCh38.110.chr_patch_hapl_scaff.gtf"
 
 # R2Dtool rust implementation 
 cd ~/R2Dtool && rm -rf target; cargo build --release 
 export PATH="${PATH}:/home/150/as7425/R2Dtool/target/release/"
 
+time r2d annotate -i "${sites}" -g ${anno} -H > "${wd}/methylation_calls_annotated.bed"
+time r2d liftover -i "${sites}" -g ${anno} -H > "${wd}/methylation_calls_annotated_liftover.bed"
+
 ##################################################
 
-# annotate the methylation calls against gencode v38 
+# check sequence context in the liftover 
 
-# subset annotation 
-# target="ENST00000286448.12"
-# # cat /g/data/lf10/as7425/genomes/human_genome/gencode/gencode_v38/gencode.v38.annotation.gtf | grep $target > /home/150/as7425/R2Dtool/test/gencode_v38.gtf
-# cat /g/data/lf10/as7425/genomes/human_genome/gencode/gencode_v38/gencode.v38.annotation.gtf | grep $target | awk '($3 == "exon")' | grep "ENST00000286448.12" > /home/150/as7425/R2Dtool/test/gencode_v38.gtf
-# annotation="/home/150/as7425/R2Dtool/test/gencode_v38.gtf"
+export genome="/g/data/lf10/as7425/genomes/human_genome/ensembl_release_110/Homo_sapiens.GRCh38.dna_sm.toplevel.fa"
+tail -n +2 "${wd}/methylation_calls_annotated_liftover.bed" | cut -f1-6 | awk -F "\t" '($6 == "-")' > "${wd}/methylation_calls_annotated_liftover_noheader.bed" 
+bedtools getfasta -s -fi ${genome} -bed "${wd}/methylation_calls_annotated_liftover_noheader.bed" | tail -n +2 | awk 'NR%2==1' | sort | uniq -c | sort -nr > ${wd}/liftover_sequence_context.txt
+cat ${wd}/liftover_sequence_context.txt
 
-# build 
-# cd ~/R2Dtool && rm -rf target && cargo build --release 
-cd $wd; rm splice_sites_map.txt 2>/dev/null
-time r2d annotate -i "${wd}/methylation_calls.bed" -g ${annotation} -H > "${wd}/methylation_calls_annotated.bed"
-cat <(head -n 1  "${wd}/methylation_calls_annotated.bed") <(cat  "${wd}/methylation_calls_annotated.bed" | grep "ENST00000008876" | head)
-cat splice_sites_map.txt | grep "ENST00000000233" -A 20 -B 20 
 
-# compare to Rscript version
+
+##################################################
+
+# make R2Dtool plots 
+
 module load R 
-time Rscript ~/R2Dtool/scripts/R2_annotate.R "${wd}/methylation_calls.bed" "${annotation}" "${wd}/methylation_calls_annotated_R.bed"
-
-##################################################
-
-# liftover the annotated called to genomic coordinates 
-time r2d liftover -i "${wd}/methylation_calls_annotated.bed" -g ${annotation} -H > "${wd}/methylation_calls_annotated_lifted.bed"
-
-##################################################
-
-# plotMetaTranscript
-export wd="/g/data/lf10/as7425/R2DTool_demo/"; mkdir -p ${wd}; cd $wd
-module load R 
-
-# Rust version of annotate 
-time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "${wd}/methylation_calls_annotated.bed" "${wd}/metatranscript_out_Rust.png" "probability" "0.9999" "upper" -c loess -l -o "${wd}/transcript_data_Rust.tsv"
-
-# R version of annotate 
-time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "${wd}/methylation_calls_annotated_R.bed" "${wd}/metatranscript_out_R.png" "probability" "0.9999" "upper" -c loess -l -o "${wd}/transcript_data_R.tsv"
+time Rscript ~/R2Dtool/scripts/R2_plotMetaTranscript.R "${wd}/methylation_calls_annotated.bed" "${wd}/metatranscript_out_Rust.svg" "frac_mod" "9" "upper" -c loess -l -o "${wd}/transcript_data_Rust.tsv"
+time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated.bed" "${wd}/metajunction_out_binom_rust.svg" "frac_mod" "9" "upper" -c loess -o "$wd/table"
 
 
 ##################################################
-
-# plotMetaJunction
-module load R 
-export wd="/g/data/lf10/as7425/R2DTool_demo/"; mkdir -p ${wd}; cd $wd
-
-# time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated_lifted.bed" "${wd}/metajunction_out.png" "probability" "0.9999" "upper"
-
-time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated.bed" "${wd}/metajunction_out_binom_rust.png" "probability" "0.9999" "upper" -c binom  
-
-time Rscript ~/R2Dtool/scripts/R2_plotMetaJunction.R "${wd}/methylation_calls_annotated_R.bed" "${wd}/metajunction_out_binom_R.png" "probability" "0.9999" "upper" -c binom  
-
-
-##################################################
-
-# plot metacodon 
-# plotMetaJunction
-module load R 
-export wd="/g/data/lf10/as7425/R2DTool_demo/"; mkdir -p ${wd}; cd $wd
-
-time Rscript ~/R2Dtool/scripts/R2_plotMetaCodon.R -s -l "${wd}/methylation_calls_annotated.bed" "${wd}/metacodon_out_binom_rust_start.png" "probability" "0.9999" "upper"
-
-time Rscript ~/R2Dtool/scripts/R2_plotMetaCodon.R -e -l "${wd}/methylation_calls_annotated.bed" "${wd}/metacodon_out_binom_rust_end.png" "probability" "0.9999" "upper"
-
-
-# annotate methylation calls using Gencode v38
-
-
-time Rscript ~/R2Dtool/scripts/R2_annotate.R "${wd}/methylationCalls.bed" "${annotation}" "${wd}/methylationCalls_annotated.bed"
-# takes about 9 minutes
-
-# lift methylation calls to genomic coordinates using GENCODE v38
-time Rscript ~/R2Dtool/scripts/R2_lift.R "${wd}/methylationCalls_annotated.bed" "${annotation}" "${wd}/methylationCalls_annotated_lifted.bed"
-# takes about 5 minutes
-
-# filter for significant sites
-cat <(head -n 1 "${wd}/methylationCalls_annotated_lifted.bed") <(awk '($11>0.9999)' "${wd}/methylationCalls_annotated_lifted.bed") > "${wd}/methylationCalls_annotated_lifted_significant.bed"
-
-# compress
-cat "${wd}/methylationCalls_annotated_lifted_significant.bed" | gzip -c > "${wd}/methylationCalls_annotated_lifted_significant.bed.gz"
-
