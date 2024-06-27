@@ -1,150 +1,99 @@
 use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Write, BufWriter};
 use std::error::Error;
-// use crate::parse_annotation::{Transcript, read_gtf_file, read_gff_file};
 use crate::parse_gtf::{Transcript, read_annotation_file};
 use std::collections::HashMap;
+use rayon::prelude::*;
 
-pub fn convert_transcriptomic_to_genomic_coordinates(
-    site_fields: &[&str], // input: tab-separated transcriptome position fields
-    annotations: &HashMap<String, Transcript>, // input: parsed annotation object
+fn convert_transcriptomic_to_genomic_coordinates(
+    site_fields: &[&str],
+    annotations: &HashMap<String, Transcript>,
     has_version: bool
-
-) -> Option<String> { // return type: Option<String), either Some(String) or None
-    
-    // Check if there are at least 4 fields in site_fields
+) -> Option<String> {
     if site_fields.len() < 4 {
-        return None; // If not, return None
+        return None;
     }
 
-    // Extract the transcript ID with version from the first field
     let transcript_id_with_version = site_fields[0];
-
     let transcript_id = if has_version {
         transcript_id_with_version
     } else {
-        transcript_id_with_version.split('.').next().unwrap()
+        transcript_id_with_version.split('.').next()?
     };
 
-    // Parse the transcriptomic position (second field) as u64
-    let position: u64 = site_fields[1].parse().unwrap();
-
-    // Initialize the current_position variable to keep track of the cumulative exon lengths
+    let position: u64 = site_fields[1].parse().ok()?;
     let mut current_position = 0;
 
-    // Check if there is a transcript associated with the given transcript_id
-    if let Some(transcript) = annotations.get(transcript_id) {
-        // Sort exons based on their start position and strand orientation
-        let mut exons = transcript.exons.clone(); // Clone to avoid mutating original data
-        if transcript.strand.as_deref() == Some("-") {
-            // For negative strand, sort descending by start
-            exons.sort_by(|a, b| b.start.cmp(&a.start));
-        } else {
-            // For positive strand or undefined, sort ascending by start
-            exons.sort_by(|a, b| a.start.cmp(&b.start));
-        }
-
-        // Iterate through each exon in the transcript
-        for exon_data in &exons {
-
-            // Calculate the exon length
-            let exon_length = exon_data.end - exon_data.start + 1;
-            // Print exon start and end positions
-            // println!("Exon start: {}, Exon end: {}, Exon length: {}", exon_data.start, exon_data.end, exon_length);
-
-
-            // Check if the current exon contains the transcriptomic position
-
-            if current_position + exon_length > position {
-
-                // Calculate the genomic position based on the strand
-                let genomic_position = if transcript.strand.as_deref() == Some("+") {
-                    position - current_position + exon_data.start - 1
-                } else {
-                    exon_data.end - (position - current_position) - 1
-                };
-
-                // Get the chromosome name
-                let chrom = &transcript.chromosome;
-
-                // Get the genomic strand
-                let genomic_strand = &transcript.strand;
-
-                // Join the additional columns (fields after the second one) using a tab character
-                let additional_columns = site_fields[1..].join("\t");
-
-                // Return the formatted output string
-                return Some(format!(
-                    "{}\t{}\t{}\t\t\t{}\t{}\t{}",
-                    chrom, genomic_position, genomic_position + 1, genomic_strand.as_deref().unwrap_or(""), site_fields[0], additional_columns
-                ));
-            }
-
-            // Increment the current_position by the exon_length
-            current_position += exon_length;
-        }
+    let transcript = annotations.get(transcript_id)?;
+    let mut exons = transcript.exons.clone();
+    if transcript.strand.as_deref() == Some("-") {
+        exons.sort_by(|a, b| b.start.cmp(&a.start));
+    } else {
+        exons.sort_by(|a, b| a.start.cmp(&b.start));
     }
 
-    // If no suitable transcript is found, print a warning and return None
+    for exon_data in &exons {
+        let exon_length = exon_data.end - exon_data.start + 1;
+        if current_position + exon_length > position {
+            let genomic_position = if transcript.strand.as_deref() == Some("+") {
+                position - current_position + exon_data.start - 1
+            } else {
+                exon_data.end - (position - current_position) - 1
+            };
+
+            let chrom = &transcript.chromosome;
+            let genomic_strand = &transcript.strand;
+            let additional_columns = site_fields[1..].join("\t");
+
+            return Some(format!(
+                "{}\t{}\t{}\t\t\t{}\t{}\t{}",
+                chrom, genomic_position, genomic_position + 1, genomic_strand.as_deref().unwrap_or(""), site_fields[0], additional_columns
+            ));
+        }
+        current_position += exon_length;
+    }
+
     eprintln!("Warning: No associated transcripts found for site '{}'.", transcript_id);
     None
 }
-
 pub fn run_liftover(matches: &clap::ArgMatches, has_header: bool, has_version: bool) -> Result<(), Box<dyn Error>> {
-
-    // TODO: implement format matching for GFF3 file parsing 
-    // let default_format = String::from("gtf");
-    // let format = matches.get_one("format").unwrap_or(&default_format);
 
     let gtf_file: String = matches.get_one::<String>("gtf").unwrap().to_string();
     let input_file: String = matches.get_one::<String>("input").unwrap().to_string();
     let output_file: Option<String> = matches.get_one::<String>("output").map(|s: &String| s.to_string());
     
-    // By default, read in the annotations as GTF file
-    // TODO: implement GFF3 parsing 
     let annotations = read_annotation_file(&gtf_file, true, has_version)?;
 
-    // Print the annotations in a table
-    // eprintln!("Previewing transcript annotations\n");
-    // preview_annotations(&annotations);
+    let mut input_reader = BufReader::with_capacity(512 * 1024, File::open(input_file.clone())?);
+    let mut output_writer = BufWriter::with_capacity(512 * 1024, match output_file {
+        Some(file_name) => Box::new(File::create(file_name)?) as Box<dyn Write>,
+        None => Box::new(std::io::stdout()) as Box<dyn Write>,
+    });
 
-    let mut input_reader = BufReader::new(File::open(input_file.clone()).unwrap_or_else(|_| panic!("Cannot open input file: {}", input_file)));
-
-    let mut output_writer: Box<dyn Write> = match output_file {
-        Some(file_name) => Box::new(File::create(file_name).unwrap()),
-        None => Box::new(std::io::stdout()),
-    };
-
-    let mut header = String::new();
     if has_header {
-        input_reader.read_line(&mut header).unwrap();
-        let header_fields: Vec<&str> = header.trim().split('\t').collect();
-
-        // Update the header for the output file
-        let output_header = format!(
-            "chromosome\tstart\tend\tname\tscore\tstrand\t{}",
-            header_fields[0..].join("\t")
-        );
-        writeln!(output_writer, "{}", output_header).unwrap();
+        let mut header = String::new();
+        input_reader.read_line(&mut header)?;
+        writeln!(output_writer, "chromosome\tstart\tend\tname\tscore\tstrand\t{}", header.trim())?;
     }
 
-    let mut line = String::new();
-    while input_reader.read_line(&mut line).unwrap() > 0 {
-        let site_fields: Vec<&str> = line.trim().split('\t').collect();
-        if has_header && site_fields[0] == "transcript" {
-            continue;
-        }
-        if let Err(e) = site_fields[1].parse::<u64>() {
-            eprintln!("Error parsing position from line: '{}'\nError: {}", line.trim(), e);
-        } else if let Some(genomic_coordinates) =
-        convert_transcriptomic_to_genomic_coordinates(&site_fields, &annotations, has_version)
-        {
-            if let Err(_) = writeln!(output_writer, "{}", genomic_coordinates) {
-                break;
+    // Process lines in parallel
+    let results: Vec<_> = input_reader.lines()
+        .par_bridge()
+        .filter_map(|line| {
+            let line = line.ok()?;
+            let site_fields: Vec<&str> = line.trim().split('\t').collect();
+            if has_header && site_fields[0] == "transcript" {
+                return None;
             }
-        }
-        line.clear();
+            convert_transcriptomic_to_genomic_coordinates(&site_fields, &annotations, has_version)
+        })
+        .collect();
+
+    // Write results
+    for result in results {
+        writeln!(output_writer, "{}", result)?;
     }
+
     Ok(())
 }
 
