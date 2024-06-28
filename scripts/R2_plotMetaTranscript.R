@@ -105,11 +105,16 @@ plot_ratio <- function(out_ratio, ci_method, add_labels) {
   }
 
   x_positions <- seq(0, max(out_ratio$interval), length.out = 7)
-  y_position <- if ("upper" %in% names(out_ratio)) {
-    0.87 * max(out_ratio$upper, na.rm = TRUE)
+  max_y <- if ("upper" %in% names(out_ratio)) {
+    max(out_ratio$upper, na.rm = TRUE)
   } else {
-    1.03 * max(out_ratio$ratio, na.rm = TRUE)
+    max(out_ratio$ratio, na.rm = TRUE)
   }
+  
+  # Increase y_position for labels and set a higher y-axis limit
+  y_position <- 1.1 * max_y
+  y_limit <- 1.2 * max_y
+
   p <- ggplot(out_ratio, aes(x = interval, y = ratio)) +
     geom_point(alpha = 0.5, color = "red") +
     theme_minimal() +
@@ -118,13 +123,13 @@ plot_ratio <- function(out_ratio, ci_method, add_labels) {
     ggtitle("Proportion of significant sites across metatranscript bins") +
     xlab("Relative metatranscriptomic location") + ylab("Proportion of significant sites") +
     geom_vline(xintercept = c(80,40), col = "black") + 
-    coord_cartesian(xlim = c(0, max(out_ratio$interval)), ylim = c(0, y_position))
+    expand_limits(y = y_limit)  # Use expand_limits instead of coord_cartesian
 
   if (add_labels) {
     p <- p +
-      geom_text(label = "5' UTR", x = x_positions[2], y = y_position, vjust = -0.5, size = 10) +
-      geom_text(label = "CDS", x = x_positions[4], y = y_position, vjust = -0.5, size = 10) +
-      geom_text(label = "3'UTR", x = x_positions[6], y = y_position, vjust = -0.5, size = 10)
+      geom_text(label = "5' UTR", x = x_positions[2], y = y_position, vjust = -0.5, size = 5) +
+      geom_text(label = "CDS", x = x_positions[4], y = y_position, vjust = -0.5, size = 5) +
+      geom_text(label = "3'UTR", x = x_positions[6], y = y_position, vjust = -0.5, size = 5)
   }
 
   if (ci_method == "binom") {
@@ -136,7 +141,6 @@ plot_ratio <- function(out_ratio, ci_method, add_labels) {
 
   return(p)
 }
-
 
 # define the significant sites 
 calls <- filter_calls(input_file, col_name, cutoff, direction)
