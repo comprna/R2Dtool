@@ -393,7 +393,6 @@ fn check_transcript_length(transcript: &mut Transcript) {
         }
     }
 }
-
 // Unit tests 
 #[cfg(test)]
 mod tests {
@@ -408,7 +407,7 @@ mod tests {
     #[test]
     fn test_read_gtf_file() {
         init();
-        let gtf_file = Path::new("./test/GRCm39_subset.gtf");
+        let gtf_file = Path::new("./test/GRCh38.110_subset.gtf");
         let transcripts = read_annotation_file(gtf_file.to_str().unwrap(), true, false).unwrap();
 
         assert!(!transcripts.is_empty());
@@ -420,8 +419,8 @@ mod tests {
         init(); 
 
         
-        let gtf_file_path = "./test/gencode_v38.gtf";
-        let target_transcript_id = "ENST00000579823";
+        let gtf_file_path = "./test/GRCh38.110_subset.gtf";
+        let target_transcript_id = "ENST00000400109";
 
         // Read the GTF file
         let transcripts = read_annotation_file(gtf_file_path, true, false).expect("Failed to read GTF file");
@@ -445,7 +444,7 @@ mod tests {
         init(); // Initialize logging if necessary
 
         // file path 
-        let gtf_file_path = "./test/gencode_v38.gtf";
+        let gtf_file_path = "./test/GRCh38.110_subset.gtf";
 
         // Read the GTF file
         let transcripts = read_annotation_file(gtf_file_path, true, false).expect("Failed to read GTF file");
@@ -473,15 +472,4 @@ mod tests {
             println!("---------------------------------------------------");
         }
     }
-
-    // // Test the parsing of GFF3 files 
-    // #[test]
-    // fn test_read_gff_file() {
-    //     init();
-        
-    //     let gff_file = Path::new("./test/GRCm39_subset.gff3");
-    //     let transcripts = read_annotation_file(gff_file.to_str().unwrap(), false).unwrap();
-    //     assert!(!transcripts.is_empty());
-    //     // TODO: Add assertions to check the expected behavior and results
-    // }
 }
