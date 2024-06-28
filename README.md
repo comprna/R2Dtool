@@ -20,11 +20,9 @@ R2Dtool is a set of genomics utilities for handling, integrating, and viualising
        - [Requirements](#requirements)
        - [Compiling from source](#compiling-from-source)
        - [R2Dtool tutorial](#r2dtool-tutorial)
-
    - [General usage](#usage)
        - [Handling isoform-mapped RNA sites](#handling-isoform-mapped-rna-sites)
        - [Visualising isoform-aware RNA feature metadistributions](#visualising-isoform-aware-rna-feature-metadistributions)
-
    - [Input and output data structure](#input-and-output-data-structure)
    - [Gene annotation requirements](#gene-annotation-rquirements)
 
@@ -32,10 +30,13 @@ R2Dtool is a set of genomics utilities for handling, integrating, and viualising
 
 #### Requirements
 
-R2Dtool has been tested on Mac OS X 14.1, and Red Hat Enterprise Linux 4.18.0, and should be broadly compatible with any system that support Rustc and R. 
+R2Dtool has been tested on Mac OS X 14.1, and Red Hat Enterprise Linux 4.18.0, and should be broadly compatible with any system that support Rustc and R.   
+
+We recommend using R2Dtool in an environment with at least 4 CPU cores and 12GB of free memory.
 
 - R2Dtool requires ```rustc``` and ```cargo``` for compilation. 
 - Additionally, ```R```, along with ```tidyverse``` and ```binom``` R packages, are requred to generate metaplots. 
+
 
 #### Compiling from source: 
 
@@ -53,13 +54,12 @@ The input dataset, ```m6A_isoform_sites_GRCh38_subset.bed```, contains the posit
 The input file has headers, so we will pass the '-H' flag to R2Dtool to specify that headers are present. 
 
 ```
-$ head -n 5 ./test/m6A_isoform_sites_GRCh38_subset.bed
-
-transcript      start   end     base    coverage        strand  N_valid_cov     fraction_modified
-ENST00000381989.4       2682    2683    a       10      +       10      0.00
-ENST00000381989.4       2744    2745    a       10      +       10      0.00
-ENST00000381989.4       2928    2929    a       10      +       10      0.00
-ENST00000381989.4       2985    2986    a       10      +       10      0.00
+$ head -n 5 m6A_isoform_sites_GRCh38_subset.bed | column -t
+transcript         start  end   base  coverage  strand  N_valid_cov  fraction_modified
+ENST00000381989.4  2682   2683  a     10        +       10           0.00
+ENST00000381989.4  2744   2745  a     10        +       10           0.00
+ENST00000381989.4  2928   2929  a     10        +       10           0.00
+ENST00000381989.4  2985   2986  a     10        +       10           0.00
 ```
 
 R2Dtool allows us to liftover these sites to genomic coordinates, calculate the distances of m6A sites to annotated gene features, and visualise the isoform-resolved distributions of RNA feature around genomic landmarks. 
@@ -75,14 +75,14 @@ $ cd R2Dtool && export PATH="$PATH:$(pwd)/target/release/"
 # liftover transcriptomic sites to genomic coordinates
 $ r2d liftover -H -g ./test/GRCh38.110_subset.gtf -i ./test/m6A_isoform_sites_GRCh38_subset.bed > ./test/liftover.bed
 
-$ head -n 5 ./test/liftover.bed
-chromosome      start   end     name    score   strand  transcript      start   end     base    coverage        strand  N_valid_cov     fraction_modified
-13      24455165        24455166                        -       ENST00000381989.4       2682    2683    a       10      +       10      0.00
-13      24455103        24455104                        -       ENST00000381989.4       2744    2745    a       10      +       10      0.00
-13      24452564        24452565                        -       ENST00000381989.4       2928    2929    a       10      +       10      0.00
-13      24452507        24452508                        -       ENST00000381989.4       2985    2986    a       10      +       10      0.00
+$ head -n 5 ./test/liftover.bed | column -t -s $'\t'
+chromosome  start     end       name  score  strand  transcript         start  end   base  coverage  strand  N_valid_cov  fraction_modified
+13          24455165  24455166               -       ENST00000381989.4  2682   2683  a     10        +       10           0.00
+13          24435272  24435273               -       ENST00000381989.4  3941   3942  a     20        +       20           80.00
+13          24431398  24431399               -       ENST00000381989.4  4897   4898  a     34        +       34           0.00
+13          23864155  23864156               -       ENST00000382172.4  1056   1057  a     15        +       15           0.00
 ```
-The genomic cooridnates have been added to columns 1-6. We can now open liftover.bed in the genome browser, or compare the positions of our m6A sites to features previously annotated in genomic coordinates, e.g. using [Bedtools](https://bedtools.readthedocs.io/en/latest/). 
+The genomic cooridnates have been added to columns 1-6. We can now open liftover.bed in the genome browser, or compare the positions of our m6A sites to features previously annotated in genomic coordinates, e.g. using [bedtools](https://bedtools.readthedocs.io/en/latest/). 
 
 We can also use R2Dtool to annotate the position of each m6A site, assigning a metatranscript region to the site, and calculating distances to local transcript landmarks. 
 This can be accomplished using R2Dtool's annotate function: 
@@ -91,12 +91,12 @@ This can be accomplished using R2Dtool's annotate function:
 # annotate bed-like transcriptomic sites with metatranscript coordinates, distance to splice junctions, transcript structure and transcript biotype
 $ r2d annotate -H -g ./test/GRCh38.110_subset.gtf -i ./test/m6A_isoform_sites_GRCh38_subset.bed > ./test/annotate.bed
 
-$ head -n 5  ./test/annotate.bed 
-transcript      start   end     base    coverage        strand  N_valid_cov     fraction_modified       gene_id gene_name       transcript_biotype      tx_len  cds_start       cds_end tx_end  transcript_metacoordinate       abs_cds_start   abs_cds_end     up_junc_dist    down_junc_dist
-ENST00000381989.4       2682    2683    a       10      +       10      0.00    ENSG00000102699 PARP4   protein_coding  5437    74      5246    5437    1.50425 2608    -2564   46      150
-ENST00000381989.4       2744    2745    a       10      +       10      0.00    ENSG00000102699 PARP4   protein_coding  5437    74      5246    5437    1.51624 2670    -2502   108     88
-ENST00000381989.4       2928    2929    a       10      +       10      0.00    ENSG00000102699 PARP4   protein_coding  5437    74      5246    5437    1.55182 2854    -2318   28      160
-ENST00000381989.4       2985    2986    a       10      +       10      0.00    ENSG00000102699 PARP4   protein_coding  5437    74      5246    5437    1.56284 2911    -2261   85      103
+$ head -n 5  ./test/annotate.bed | column -t -s $'\t'
+transcript         start  end   base  coverage  strand  N_valid_cov  fraction_modified  gene_id          gene_name  transcript_biotype  tx_len  cds_start  cds_end  tx_end  transcript_metacoordinate  abs_cds_start  abs_cds_end  up_junc_dist  down_junc_dist
+ENST00000381989.4  2682   2683  a     10        +       10           0.00               ENSG00000102699  PARP4      protein_coding      5437    74         5246     5437    1.50425                    2608           -2564        46            150
+ENST00000381989.4  2744   2745  a     10        +       10           0.00               ENSG00000102699  PARP4      protein_coding      5437    74         5246     5437    1.51624                    2670           -2502        108           88
+ENST00000381989.4  2928   2929  a     10        +       10           0.00               ENSG00000102699  PARP4      protein_coding      5437    74         5246     5437    1.55182                    2854           -2318        28            160
+ENST00000381989.4  2985   2986  a     10        +       10           0.00               ENSG00000102699  PARP4      protein_coding      5437    74         5246     5437    1.56284                    2911           -2261        85            103
 ```
 
 If we want to understand the distribution of these features across the length of transcripts, we can make metatranscript plots. 
