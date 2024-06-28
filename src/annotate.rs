@@ -268,3 +268,129 @@ pub fn preview_annotations(annotations: &HashMap<String, Transcript>) {
         eprintln!("Annotations end");
     }
 }
+
+// Unit tests 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_calculate_cds_end() {
+        assert_eq!(calculate_cds_end(100, 200), 300);
+        assert_eq!(calculate_cds_end(0, 100), 100);
+    }
+
+    #[test]
+    fn test_calculate_meta_coordinates() {
+        // Test UTR5 region
+        let (rel_pos, abs_cds_start, abs_cds_end) = calculate_meta_coordinates(50, 100, 200, 100);
+        assert_eq!(rel_pos, 0.5);
+        assert_eq!(abs_cds_start, -50);
+        assert_eq!(abs_cds_end, -250);
+
+        // Test CDS region
+        let (rel_pos, abs_cds_start, abs_cds_end) = calculate_meta_coordinates(150, 100, 200, 100);
+        assert_eq!(rel_pos, 1.25);
+        assert_eq!(abs_cds_start, 50);
+        assert_eq!(abs_cds_end, -150);
+
+        // Test UTR3 region
+        let (rel_pos, abs_cds_start, abs_cds_end) = calculate_meta_coordinates(350, 100, 200, 100);
+        assert_eq!(rel_pos, 2.5);
+        assert_eq!(abs_cds_start, 250);
+        assert_eq!(abs_cds_end, 50);
+    }
+
+    #[test]
+    fn test_splice_site_distances() {
+        let splice_sites = vec![
+            SpliceSite { transcript_id: "test".to_string(), tx_coord: 50 },
+            SpliceSite { transcript_id: "test".to_string(), tx_coord: 100 },
+            SpliceSite { transcript_id: "test".to_string(), tx_coord: 150 },
+        ];
+
+        // Test coordinate before all splice sites
+        let (up, down) = splice_site_distances(25, &splice_sites);
+        assert_eq!(up, None);
+        assert_eq!(down, Some(25));
+
+        // Test coordinate between splice sites
+        let (up, down) = splice_site_distances(75, &splice_sites);
+        assert_eq!(up, Some(25));
+        assert_eq!(down, Some(25));
+
+        // Test coordinate after all splice sites
+        let (up, down) = splice_site_distances(200, &splice_sites);
+        assert_eq!(up, Some(50));
+        assert_eq!(down, None);
+    }
+
+    #[test]
+    fn test_run_annotate() {
+        use std::path::Path;
+    
+        // Use actual files from the ./test/ directory
+        let input_file = Path::new("./test/m6A_isoform_sites_GRCh38_subset.bed");
+        let gtf_file = Path::new("./test/GRCh38.110_subset.gtf");
+        let output_file = NamedTempFile::new().unwrap();
+    
+        // Create mock ArgMatches
+        let matches = clap::Command::new("test")
+            .arg(clap::Arg::new("gtf").short('g').long("gtf").required(true))
+            .arg(clap::Arg::new("input").short('i').long("input").required(true))
+            .arg(clap::Arg::new("output").short('o').long("output").required(true))
+            .get_matches_from(vec![
+                "test",
+                "-g", gtf_file.to_str().unwrap(),
+                "-i", input_file.to_str().unwrap(),
+                "-o", output_file.path().to_str().unwrap(),
+            ]);
+    
+        // Run annotate
+        let result = run_annotate(&matches, true, false);
+        assert!(result.is_ok());
+    
+        // Read and check output
+        let output = std::fs::read_to_string(output_file.path()).unwrap();
+        let output_lines: Vec<&str> = output.lines().take(2).collect();
+        assert_eq!(output_lines.len(), 2); // Header + 1 data line
+    
+        // Check header
+        let expected_header = "transcript\tstart\tend\tbase\tcoverage\tstrand\tN_valid_cov\tfraction_modified\tgene_id\tgene_name\ttranscript_biotype\ttx_len\tcds_start\tcds_end\ttx_end\ttranscript_metacoordinate\tabs_cds_start\tabs_cds_end\tup_junc_dist\tdown_junc_dist";
+        assert_eq!(output_lines[0], expected_header);
+    
+        // Check data line
+        let data_fields: Vec<&str> = output_lines[1].split('\t').collect();
+        assert_eq!(data_fields.len(), 20); // Ensure we have the correct number of fields
+    
+        // Check specific fields
+        assert_eq!(data_fields[0], "ENST00000381989.4");
+        assert_eq!(data_fields[1], "2682");
+        assert_eq!(data_fields[2], "2683");
+        assert_eq!(data_fields[3], "a");
+        assert_eq!(data_fields[4], "10");
+        assert_eq!(data_fields[5], "+");
+        assert_eq!(data_fields[6], "10");
+        assert_eq!(data_fields[7], "0.00");
+        assert_eq!(data_fields[8], "ENSG00000102699");
+        assert_eq!(data_fields[9], "PARP4");
+        assert_eq!(data_fields[10], "protein_coding");
+    
+        // Check numeric fields 
+        assert!(data_fields[11].parse::<u64>().is_ok()); // tx_len
+        assert!(data_fields[12].parse::<u64>().is_ok()); // cds_start
+        assert!(data_fields[13].parse::<u64>().is_ok()); // cds_end
+        assert!(data_fields[14].parse::<u64>().is_ok()); // tx_end
+        
+        let metacoordinate: f64 = data_fields[15].parse().unwrap();
+        assert!((metacoordinate - 1.50425).abs() < 0.00001);
+    
+        assert!(data_fields[16].parse::<i64>().is_ok()); // abs_cds_start
+        assert!(data_fields[17].parse::<i64>().is_ok()); // abs_cds_end
+        assert!(data_fields[18].parse::<u64>().is_ok()); // up_junc_dist
+        assert!(data_fields[19].parse::<u64>().is_ok()); // down_junc_dist
+    
+        println!("Actual output: {}", output_lines[1]);
+    }
+}
