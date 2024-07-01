@@ -43,15 +43,15 @@ suppressMessages(suppressWarnings(library(tidyverse)))
 
 # define function to label significance
 filter_calls <- function(input_file, col_name, cutoff, direction) {
-  # Read in annotated transcriptomic positions
+
   calls <- read_tsv(file = input_file, col_names = T, guess_max = 99999999)
   
-  # Ensure the column exists in the dataset
+  # ensure the filter field column is present in the R2Dtool annotate output 
   if (!col_name %in% names(calls)) {
     stop(paste("Column", col_name, "does not exist in the input file. R2Dtool annotate must be run in header mode (i.e. using -H flag) for plotMetaJunction to work"))
   }
   
-  # Filter based on direction
+  # filter for significant sites 
   if (direction == "upper") {
     calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] > cutoff, "sig", "ns"))
   } else {
@@ -68,17 +68,17 @@ get_sj_data <- function(calls, ci_method) {
     mutate(up_junc_dist = -up_junc_dist) %>% 
     pivot_longer(cols = c(up_junc_dist, down_junc_dist), names_to = "type_dist", values_to = "junc_dist") %>% 
     dplyr::select(-type_dist) %>% 
-    dplyr::filter(junc_dist < 355 & junc_dist > -355) %>% 
+    dplyr::filter(junc_dist < 355 & junc_dist > -355) %>%  # maximum distance shown on plot
     group_by(junc_dist, filter) %>% 
     summarise(n = n(), .groups = 'drop') %>%
     pivot_wider(names_from = "filter", values_from = "n") %>%
     mutate(ratio = sig / (sig + ns + 1e-9))
   
   if (ci_method == "binom") {
-    # Filter out rows where either sig or ns is zero to avoid errors in binom.confint
+    
     sj_data <- sj_data %>% filter(sig > 0 & ns > 0)
     
-    # Compute confidence intervals only for binom method
+    # binomial confidence intervals 
     conf_int <- binom::binom.confint(sj_data$sig, sj_data$sig + sj_data$ns, methods = "wilson")
     sj_data$lower <- conf_int$lower
     sj_data$upper <- conf_int$upper
@@ -87,7 +87,6 @@ get_sj_data <- function(calls, ci_method) {
   return(sj_data)
 }
 
-# Define function to generate plot
 plot_sj_data <- function(sj_data, ci_method) {
   p <- ggplot(sj_data, aes(x = junc_dist, y = ratio)) + 
     geom_point(alpha = 0.5, color = "blue") + 
@@ -99,10 +98,10 @@ plot_sj_data <- function(sj_data, ci_method) {
     theme_minimal()
   
   if (ci_method == "binom") {
-    # Add binom confidence intervals
+    # binom confidence interval
     p <- p + geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2)
   } else {
-    # Use loess smoothing
+    # loess smoothing
     p <- p + geom_smooth(span = 0.2)
   }
   

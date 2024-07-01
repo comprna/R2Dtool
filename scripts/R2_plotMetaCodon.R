@@ -1,12 +1,10 @@
 #!/usr/bin/env Rscript
 
-# Load required libraries quietly
 suppressMessages({
   library(tidyverse)
   library(binom)
 })
 
-# Define help message
 help_message <- function() {
   cat("\nUsage: Rscript script.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output.tsv'] [-l] (-s | -e)\n")
   cat("Options:\n")
@@ -18,7 +16,6 @@ help_message <- function() {
   cat("  -h  Show this help message and exit.\n")
 }
 
-# Initialize parameters
 args <- commandArgs(trailingOnly = TRUE)
 options <- list(ci_method = "loess", output_path = NULL, add_labels = FALSE, plot_from = NULL)
 
@@ -30,7 +27,6 @@ if ("-h" %in% args || length(args) == 0) {
 remaining_args <- list()
 plot_from_specified <- FALSE
 
-# Parse the command line arguments
 for (arg in args) {
   if (arg %in% c("-s", "-e")) {
     if (!is.null(options$plot_from)) {
@@ -51,32 +47,28 @@ for (arg in args) {
   }
 }
 
-# Validate required flags
+# check for codon flag 
 if (!plot_from_specified) {
   help_message()
   stop("Error: Either -s or -e flag must be specified.")
 }
 
-# Validate number of remaining positional arguments
 if (length(remaining_args) != 5) {
   help_message()
   stop("Error: Incorrect number of positional arguments.")
 }
 
-# Assign remaining arguments
 input_file <- as.character(remaining_args[1])
 output_file <- as.character(remaining_args[2])
 col_name <- as.character(remaining_args[3])
 cutoff <- as.numeric(remaining_args[4])
 direction <- as.character(remaining_args[5])
 
-# Check for file existence
 if (!file.exists(input_file)) {
   stop("Input file does not exist")
 }
 
-
-# Define function to classify calls as significant or non-significant
+# filter for significant sites 
 filter_calls <- function(file, col, cutoff, direction) {
   calls <- tryCatch({
     read_tsv(file = file, col_names = TRUE, guess_max = 99999999)
@@ -85,6 +77,7 @@ filter_calls <- function(file, col, cutoff, direction) {
     stop(e)
   })
 
+  # ensure the filter field column is present in the R2Dtool annotate output 
   if (!col %in% names(calls)) {
     stop(paste("Column", col, "does not exist in the input file. R2Dtool annotate must be run in header mode (i.e. with -H flag) for plotMetaCodon to work"))
   }
@@ -96,7 +89,7 @@ filter_calls <- function(file, col, cutoff, direction) {
   return(calls)
 }
 
-# Define function to calculate ratios and confidence intervals if needed
+# calculate ratio of significant sites 
 compute_ratio <- function(calls, interval) {
   # Filter calls to include only those within the specified range
   calls <- calls %>%
@@ -120,9 +113,7 @@ compute_ratio <- function(calls, interval) {
   return(out_ratio)
 }
 
-
-# Define function to plot the ratio of significant sites
-# Define function to plot the ratio of significant sites
+# plot the ratio of significant sites 
 plot_ratio <- function(out_ratio) {
   if (nrow(out_ratio) == 0 || is.infinite(max(out_ratio$interval))) {
     stop("out_ratio is empty or contains invalid interval data.")
@@ -159,15 +150,15 @@ plot_ratio <- function(out_ratio) {
   return(p)
 }
 
-# Processing the data
 calls <- filter_calls(input_file, col_name, cutoff, direction)
+
 out_ratio <- compute_ratio(calls, options$plot_from)
 
-# Optional writing of results
+# optionally, write the data shown in the plot to a file 
 if (!is.null(options$output_path)) {
   write_tsv(out_ratio, options$output_path)
 }
 
-# Plot and save
 p <- plot_ratio(out_ratio)
+
 ggsave(output_file, p, scale = 4, width = 600, height = 400, units = "px")

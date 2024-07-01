@@ -26,10 +26,9 @@ add_labels <- FALSE
 if ("-l" %in% args) {
   add_labels <- TRUE
   index <- which(args == "-l")
-  args <- args[-index]  # Remove the flag from the args
+  args <- args[-index]  
 }
 
-# Check number of positional arguments
 if (length(args) != 5) {
   stop("\nUsage: Rscript R2_plotMetaTranscript.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output.tsv']", call. = FALSE)
 }
@@ -62,12 +61,12 @@ filter_calls <- function(input_file, col_name, cutoff, direction) {
     stop(e)
   })
   
-  # Ensure the column exists in the dataset
+  # ensure the filter field column is present in the R2Dtool annotate output 
   if (!col_name %in% names(calls)) {
     stop(paste("Column", col_name, "does not exist in the input file. R2Dtool annotate must be run in header mode (i.e. using -H flag) for plotMetaTranscript to work"))
   }
   
-  # Filter based on direction
+  # filter for significant sites 
   if (direction == "upper") {
     calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] > cutoff, "sig", "ns"))
   } else {
@@ -78,9 +77,8 @@ filter_calls <- function(input_file, col_name, cutoff, direction) {
 }
 
 # define function to calculate the proportion of significant sites in metatranscript bins based on the "transcript_metacoordinate" column from R2D_annotate 
-# Modify the compute_ratio function to ensure intervals are generated correctly
 compute_ratio <- function(calls, ci_method) {
-  breaks <- seq(0, 3, 0.025)
+  breaks <- seq(0, 3, 0.025) # bin interval can be changed here, default, 120 bins of width 0.025
   out_ratio <- calls %>%
     mutate(interval = cut(transcript_metacoordinate, breaks, include.lowest = TRUE, right = TRUE, labels = FALSE)) %>%
     group_by(interval, filter) %>%
@@ -98,7 +96,6 @@ compute_ratio <- function(calls, ci_method) {
   return(out_ratio)
 }
 
-# Modify the plot_ratio function to check for valid data
 plot_ratio <- function(out_ratio, ci_method, add_labels) {
   if (nrow(out_ratio) == 0 || is.infinite(max(out_ratio$interval))) {
     stop("out_ratio is empty or contains invalid interval data.")
@@ -111,7 +108,6 @@ plot_ratio <- function(out_ratio, ci_method, add_labels) {
     max(out_ratio$ratio, na.rm = TRUE)
   }
   
-  # Increase y_position for labels and set a higher y-axis limit
   y_position <- 1.1 * max_y
   y_limit <- 1.2 * max_y
 
@@ -123,6 +119,7 @@ plot_ratio <- function(out_ratio, ci_method, add_labels) {
     ggtitle("Proportion of significant sites across metatranscript bins") +
     xlab("Relative metatranscriptomic location") + ylab("Proportion of significant sites") +
     geom_vline(xintercept = c(80,40), col = "black") + 
+    scale_x_continuous(breaks = seq(0, 3, by = 0.5), limits = c(0, 3)) + # show x-axis in original metatranscript coordinates 
     expand_limits(y = y_limit)  # Use expand_limits instead of coord_cartesian
 
   if (add_labels) {
@@ -149,9 +146,6 @@ calls <- filter_calls(input_file, col_name, cutoff, direction)
 out_ratio <- compute_ratio(calls, ci_method)
 
 out_ratio <- out_ratio %>% filter(!is.na(interval))
-
-# for diagnostic; print the output ratio 
-# print(out_ratio)
 
 # write out_ratio to path set by -o flag 
 if (!is.null(output_path)) {
