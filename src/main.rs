@@ -3,21 +3,28 @@ use clap::{Arg,Command};
 use std::process::Command as ProcessCommand;
 use std::env;
 
-
 // modules
 pub mod parse_annotation;
 pub mod annotate;
 pub mod liftover;
 pub mod parse_gtf;
+use std::path::Path;
+
+#[cfg(test)]
+mod tests;
 
 const RELATIVE_SCRIPT_PATH: &str = "../../scripts/";
 
-fn generate_r_plots(script_name: &str, args: &[String]) -> Result<(), String> {
-    let current_exe = env::current_exe().map_err(|e| format!("Failed to get current executable path: {}", e))?;
-    let script_dir = current_exe.parent()
-        .ok_or("Failed to get parent directory of executable")?
-        .join(RELATIVE_SCRIPT_PATH);
-    let script_path = script_dir.join(script_name);
+pub fn generate_r_plots(script_name: &str, args: &[String], script_dir: Option<&Path>) -> Result<(), String> {
+    let script_path = if let Some(dir) = script_dir {
+        dir.join(script_name)
+    } else {
+        let current_exe = env::current_exe().map_err(|e| format!("Failed to get current executable path: {}", e))?;
+        let script_dir = current_exe.parent()
+            .ok_or("Failed to get parent directory of executable")?
+            .join(RELATIVE_SCRIPT_PATH);
+        script_dir.join(script_name)
+    };
 
     println!("Executing R script: {:?}", script_path);
 
