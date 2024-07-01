@@ -1,9 +1,12 @@
 #!/usr/bin/env Rscript
 
-## read positional arguments while ensuring that the correct number of inputs are provided 
+# read positional arguments 
 args <- commandArgs(trailingOnly = TRUE)
 
-## check for positional arguments 
+# help message 
+if ("-h" %in% args || length(args) == 0) {
+  stop("\nUsage: Rscript R2_plotMetaTranscript.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output.tsv']", call. = FALSE)
+}
 
 # -c flag for selecting confidence interval method, options are loess (default), or binom confint (-c binom)
 ci_method <- "loess"
@@ -29,6 +32,7 @@ if ("-l" %in% args) {
   args <- args[-index]  
 }
 
+# check remaining positional arguments
 if (length(args) != 5) {
   stop("\nUsage: Rscript R2_plotMetaTranscript.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output.tsv']", call. = FALSE)
 }
@@ -76,7 +80,7 @@ filter_calls <- function(input_file, col_name, cutoff, direction) {
   return(calls)
 }
 
-# define function to calculate the proportion of significant sites in metatranscript bins based on the "transcript_metacoordinate" column from R2D_annotate 
+# calculate the proportion of significant sites in metatranscript bins based on the "transcript_metacoordinate" column from R2D_annotate 
 compute_ratio <- function(calls, ci_method) {
   breaks <- seq(0, 3, 0.025) # bin interval can be changed here, default, 120 bins of width 0.025
   out_ratio <- calls %>%
@@ -96,6 +100,7 @@ compute_ratio <- function(calls, ci_method) {
   return(out_ratio)
 }
 
+# make metatranscript plot 
 plot_ratio <- function(out_ratio, ci_method, add_labels) {
   if (nrow(out_ratio) == 0 || is.infinite(max(out_ratio$interval))) {
     stop("out_ratio is empty or contains invalid interval data.")
@@ -120,7 +125,7 @@ plot_ratio <- function(out_ratio, ci_method, add_labels) {
     xlab("Relative metatranscriptomic location") + ylab("Proportion of significant sites") +
     geom_vline(xintercept = c(80,40), col = "black") + 
     scale_x_continuous(breaks = seq(0, 3, by = 0.5), limits = c(0, 3)) + # show x-axis in original metatranscript coordinates 
-    expand_limits(y = y_limit)  # Use expand_limits instead of coord_cartesian
+    expand_limits(y = y_limit)  
 
   if (add_labels) {
     p <- p +

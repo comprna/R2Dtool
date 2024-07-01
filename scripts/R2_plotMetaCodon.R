@@ -19,6 +19,7 @@ help_message <- function() {
 args <- commandArgs(trailingOnly = TRUE)
 options <- list(ci_method = "loess", output_path = NULL, add_labels = FALSE, plot_from = NULL)
 
+# help message 
 if ("-h" %in% args || length(args) == 0) {
   help_message()
   quit(status = 0)
@@ -53,6 +54,7 @@ if (!plot_from_specified) {
   stop("Error: Either -s or -e flag must be specified.")
 }
 
+# check remaining positional arguments
 if (length(remaining_args) != 5) {
   help_message()
   stop("Error: Incorrect number of positional arguments.")

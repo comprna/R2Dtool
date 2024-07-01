@@ -1,7 +1,12 @@
 #!/usr/bin/env Rscript
 
-## read positional arguments while ensuring that the correct number of inputs are provided 
+# read positional arguments while ensuring that the correct number of inputs are provided 
 args <- commandArgs(trailingOnly = TRUE)
+
+# help message 
+if ("-h" %in% args || length(args) == 0) {
+  stop("\nUsage: Rscript R2_plotMetaJunction.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output_table.tsv']", call. = FALSE)
+}
 
 # check for positional argument for the confidence interval method
 # options are "loess" (default) or binomial confidence interval (-c binom)
@@ -20,7 +25,7 @@ if ("-o" %in% args) {
   args <- args[-c(index, index + 1)]  # Remove the flag and its value from the args
 }
 
-# check number of positional arguments
+# check remaining positional arguments
 if (length(args) != 5) {
   stop("\nUsage: Rscript R2_plotMetaJunction.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output_table.tsv']", call. = FALSE)
 }
