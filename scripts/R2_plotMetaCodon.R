@@ -86,10 +86,13 @@ filter_calls <- function(file, col, cutoff, direction) {
   })
 
   if (!col %in% names(calls)) {
-    stop(paste("Column", col, "does not exist in the input file."))
+    stop(paste("Column", col, "does not exist in the input file. R2Dtool annotate must be run in header mode (i.e. with -H flag) for plotMetaCodon to work"))
   }
 
-  calls <- calls %>% mutate(filter = ifelse(.data[[col]] > cutoff, "sig", "ns"), if (direction == "lower") filter = !filter)
+  calls <- calls %>% 
+    mutate(filter = if_else(.data[[col]] > cutoff, "sig", "ns")) %>%
+    mutate(filter = if (direction == "lower") if_else(filter == "sig", "ns", "sig") else filter)
+  
   return(calls)
 }
 
@@ -104,7 +107,9 @@ compute_ratio <- function(calls, interval) {
     group_by(.data[[interval]], filter) %>%
     summarise(n = n(), .groups = 'drop') %>%
     pivot_wider(names_from = "filter", values_from = "n", values_fill = list(n = 0)) %>%
-    mutate(ratio = sig / (sig + ns + 1e-9)) %>%
+    mutate(sig = if("sig" %in% names(.)) sig else 0,
+           ns = if("ns" %in% names(.)) ns else 0,
+           ratio = sig / (sig + ns + 1e-9)) %>%
     rename(interval = 1)
 
   # Calculate confidence intervals if the binom method is chosen
@@ -114,7 +119,6 @@ compute_ratio <- function(calls, interval) {
   }
   return(out_ratio)
 }
-
 
 
 # Define function to plot the ratio of significant sites

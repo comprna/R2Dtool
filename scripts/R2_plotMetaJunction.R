@@ -48,7 +48,7 @@ filter_calls <- function(input_file, col_name, cutoff, direction) {
   
   # Ensure the column exists in the dataset
   if (!col_name %in% names(calls)) {
-    stop(paste("Column", col_name, "does not exist in the input file."))
+    stop(paste("Column", col_name, "does not exist in the input file. R2Dtool annotate must be run in header mode (i.e. using -H flag) for plotMetaJunction to work"))
   }
   
   # Filter based on direction
