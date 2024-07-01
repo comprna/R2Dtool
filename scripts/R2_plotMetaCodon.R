@@ -85,7 +85,7 @@ filter_calls <- function(file, col, cutoff, direction) {
   }
 
   calls <- calls %>% 
-    mutate(filter = if_else(.data[[col]] > cutoff, "sig", "ns")) %>%
+    mutate(filter = if_else(.data[[col]] >= cutoff, "sig", "ns")) %>%
     mutate(filter = if (direction == "lower") if_else(filter == "sig", "ns", "sig") else filter)
   
   return(calls)

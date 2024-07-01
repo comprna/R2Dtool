@@ -69,14 +69,21 @@ filter_calls <- function(input_file, col_name, cutoff, direction) {
   if (!col_name %in% names(calls)) {
     stop(paste("Column", col_name, "does not exist in the input file. R2Dtool annotate must be run in header mode (i.e. using -H flag) for plotMetaTranscript to work"))
   }
-  
-  # filter for significant sites 
+ 
+  # ensure transcript metacoordinate and filter field are defined 
+  calls <- calls %>% filter(!is.na(transcript_metacoordinate) & 
+    is.finite(transcript_metacoordinate) & 
+    !is.na(!!sym(col_name)) & 
+    is.finite(!!sym(col_name)))
+        
+  # filter for significant sites
   if (direction == "upper") {
-    calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] > cutoff, "sig", "ns"))
+    calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] >= cutoff, "sig", "ns"))
   } else {
-    calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] < cutoff, "sig", "ns"))
+    calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] <= cutoff, "sig", "ns"))
   }
   
+
   return(calls)
 }
 
@@ -97,6 +104,7 @@ compute_ratio <- function(calls, ci_method) {
     out_ratio$upper <- conf_int$upper
   }
 
+  out_ratio <- out_ratio %>% mutate(interval = interval / 40)
   return(out_ratio)
 }
 
@@ -115,6 +123,7 @@ plot_ratio <- function(out_ratio, ci_method, add_labels) {
   
   y_position <- 1.1 * max_y
   y_limit <- 1.2 * max_y
+  print(paste("Y limit is", y_limit))
 
   p <- ggplot(out_ratio, aes(x = interval, y = ratio)) +
     geom_point(alpha = 0.5, color = "red") +
@@ -123,8 +132,7 @@ plot_ratio <- function(out_ratio, ci_method, add_labels) {
     theme(plot.title = element_text(hjust = 0.5)) +
     ggtitle("Proportion of significant sites across metatranscript bins") +
     xlab("Relative metatranscriptomic location") + ylab("Proportion of significant sites") +
-    geom_vline(xintercept = c(80,40), col = "black") + 
-    scale_x_continuous(breaks = seq(0, 3, by = 0.5), limits = c(0, 3)) + # show x-axis in original metatranscript coordinates 
+    geom_vline(xintercept = c(1,2), col = "black") + 
     expand_limits(y = y_limit)  
 
   if (add_labels) {

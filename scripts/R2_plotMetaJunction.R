@@ -58,9 +58,9 @@ filter_calls <- function(input_file, col_name, cutoff, direction) {
   
   # filter for significant sites 
   if (direction == "upper") {
-    calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] > cutoff, "sig", "ns"))
+    calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] >= cutoff, "sig", "ns"))
   } else {
-    calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] < cutoff, "sig", "ns"))
+    calls <- calls %>% mutate(filter = ifelse(.data[[col_name]] <= cutoff, "sig", "ns"))
   }
   
   return(calls)
