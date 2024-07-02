@@ -283,7 +283,7 @@ Optional arguments:
 **Plot** the **metajunction** distribution of RNA features:
 
 ```
-r2d plotMetaJunction--input <annotated bed file> --output <plot save path> --filter-field <STRING> --cutoff <INT> --cutoff-type <"upper"/"lower">
+r2d plotMetaJunction --input <annotated bed file> --output <plot save path> --filter-field <STRING> --cutoff <INT> --cutoff-type <"upper"/"lower">
 
 Arguments: 
 
