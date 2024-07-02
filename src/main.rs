@@ -2,16 +2,14 @@
 use clap::{Arg,Command};
 use std::process::Command as ProcessCommand;
 use std::env;
+use std::path::{Path,PathBuf};
+use path_absolutize::Absolutize;
 
 // modules
 pub mod parse_annotation;
 pub mod annotate;
 pub mod liftover;
 pub mod parse_gtf;
-use std::path::Path;
-
-#[cfg(test)]
-mod tests;
 
 const RELATIVE_SCRIPT_PATH: &str = "../../scripts/";
 
@@ -376,7 +374,7 @@ fn main() {
         println!("Arguments being passed to R2_plotMetaTranscript.R:");
         println!("Rscript R2_plotMetaTranscript.R {}", args.join(" "));
 
-        match generate_r_plots("R2_plotMetaTranscript.R", &args) {
+        match generate_r_plots("R2_plotMetaTranscript.R", &args, None) {
             Ok(_) => println!("PlotMetaTranscript generated successfully."),
             Err(e) => {
                 eprintln!("Error: {}", e);
@@ -406,7 +404,7 @@ fn main() {
         println!("Arguments being passed to R2_plotMetaJunction.R:");
         println!("Rscript R2_plotMetaJunction.R {}", args.join(" "));
 
-        match generate_r_plots("R2_plotMetaJunction.R", &args) {
+        match generate_r_plots("R2_plotMetaJunction.R", &args, None) {
             Ok(_) => println!("PlotMetaJunction generated successfully."),
             Err(e) => {
                 eprintln!("Error: {}", e);
@@ -416,37 +414,49 @@ fn main() {
         }
     }
     
-// plotMetaCodon 
+// plotMetaCodon
 if let Some(matches) = matches.subcommand_matches("plotMetaCodon") {
-        let codon_flag = if matches.get_flag("start_codon") { "-s" } else { "-e" };
+    let codon_flag = if matches.get_flag("start_codon") { "-s" } else { "-e" };
 
-        let mut args: Vec<String> = vec![
-            matches.get_one::<String>("input_file").unwrap().clone(),
-            matches.get_one::<String>("output_file").unwrap().clone(),
-            matches.get_one::<String>("field_name").unwrap().clone(),
-            matches.get_one::<String>("cutoff_value").unwrap().clone(),
-            matches.get_one::<String>("cutoff_type").unwrap().clone(),
-            codon_flag.to_string(),
-        ];
+    let current_dir = std::env::current_dir().expect("Failed to get current directory");
+    let input_file = current_dir.join(matches.get_one::<String>("input_file").unwrap())
+        .canonicalize()
+        .expect("Failed to canonicalize input file path");
+    let output_file_path = PathBuf::from(matches.get_one::<String>("output_file").unwrap());
+    let output_file = output_file_path.absolutize()
+        .expect("Failed to absolutize output file path");
 
-        if let Some(method) = matches.get_one::<String>("confidence_method") {
-            args.extend_from_slice(&["-c".to_string(), method.clone()]);
-        }
+    let mut args: Vec<String> = vec![
+        input_file.to_string_lossy().into_owned(),
+        output_file.to_string_lossy().into_owned(),
+        matches.get_one::<String>("field_name").unwrap().clone(),
+        matches.get_one::<String>("cutoff_value").unwrap().clone(),
+        matches.get_one::<String>("cutoff_type").unwrap().clone(),
+    ];
 
-        if let Some(table) = matches.get_one::<String>("save_table") {
-            args.extend_from_slice(&["-o".to_string(), table.clone()]);
-        }
+    args.push(codon_flag.to_string());
 
-        println!("Arguments being passed to R2_plotMetaCodon.R:");
-        println!("Rscript R2_plotMetaCodon.R {}", args.join(" "));
-    
-        match generate_r_plots("R2_plotMetaCodon.R", &args) {
-            Ok(_) => println!("PlotMetaCodon generated successfully."),
-            Err(e) => {
-                eprintln!("Error: {}", e);
-                eprintln!("PlotMetaCodon generation failed. Please check the error messages above.");
-                std::process::exit(1);
-            }
+    if let Some(method) = matches.get_one::<String>("confidence_method") {
+        args.extend_from_slice(&["-c".to_string(), method.clone()]);
+    }
+
+    if let Some(table) = matches.get_one::<String>("save_table") {
+        let save_table_path_buf = PathBuf::from(table);
+        let save_table_path = save_table_path_buf.absolutize()
+            .expect("Failed to absolutize save table path");    
+        args.extend_from_slice(&["-o".to_string(), save_table_path.to_string_lossy().into_owned()]);
+    }
+
+    println!("Arguments being passed to R2_plotMetaCodon.R:");
+    println!("Rscript R2_plotMetaCodon.R {}", args.join(" "));
+
+    match generate_r_plots("R2_plotMetaCodon.R", &args, None) {
+        Ok(_) => println!("PlotMetaCodon generated successfully."),
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            eprintln!("PlotMetaCodon generation failed. Please check the error messages above.");
+            std::process::exit(1);
         }
     }
+}
 }

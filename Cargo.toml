@@ -12,7 +12,9 @@ bio = "1.6.0"
 clap = "4.5.4"
 multimap = "0.9.1"
 rayon = "1.5.0"
+path-absolutize = "3.0.14"
 
 [dev-dependencies]
 env_logger = "0.11.3"
 tempfile = "3.2"
+assert_cmd = "2.0"

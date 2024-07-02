@@ -5,6 +5,9 @@ suppressMessages({
   library(binom)
 })
 
+cat("Arguments received:\n")
+cat(paste(commandArgs(trailingOnly = TRUE), collapse = " "), "\n")
+
 help_message <- function() {
   cat("\nUsage: Rscript script.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output.tsv'] [-l] (-s | -e)\n")
   cat("Options:\n")
@@ -17,54 +20,64 @@ help_message <- function() {
 }
 
 args <- commandArgs(trailingOnly = TRUE)
-options <- list(ci_method = "loess", output_path = NULL, add_labels = FALSE, plot_from = NULL)
+required_args <- args[1:5]
+optional_args <- args[6:length(args)]
 
-# help message 
-if ("-h" %in% args || length(args) == 0) {
+if (length(required_args) != 5) {
+  cat("Error: Incorrect number of required arguments.\n")
+  cat("Received arguments:", paste(args, collapse = " "), "\n")
   help_message()
-  quit(status = 0)
+  quit(status = 1)
 }
 
-remaining_args <- list()
-plot_from_specified <- FALSE
+input_file <- required_args[1]
+output_file <- required_args[2]
+col_name <- required_args[3]
+cutoff <- as.numeric(required_args[4])
+direction <- required_args[5]
 
-for (arg in args) {
-  if (arg %in% c("-s", "-e")) {
-    if (!is.null(options$plot_from)) {
+options <- list(ci_method = "loess", output_path = NULL, add_labels = FALSE, plot_from = NULL)
+
+# parse optional arguments
+i <- 1
+while (i <= length(optional_args)) {
+  flag <- optional_args[i]
+  
+  if (flag == "-c" && i + 1 <= length(optional_args)) {
+    options$ci_method <- optional_args[i + 1]
+    i <- i + 2
+  } else if (flag == "-o" && i + 1 <= length(optional_args)) {
+    options$output_path <- optional_args[i + 1]
+    i <- i + 2
+  } else if (flag == "-l") {
+    options$add_labels <- TRUE
+    i <- i + 1
+  } else if (flag == "-s") {
+    if (is.null(options$plot_from)) {
+      options$plot_from <- "abs_cds_start"
+    } else {
       stop("Error: Both -s and -e flags cannot be used simultaneously.")
     }
-    options$plot_from <- ifelse(arg == "-s", "abs_cds_start", "abs_cds_end")
-    plot_from_specified <- TRUE
-  } else if (arg %in% c("-c", "-o")) {
-    next_index <- which(args == arg) + 1
-    if (next_index > length(args)) {
-      stop(paste("Error: The", arg, "flag requires a following argument."))
+    i <- i + 1
+  } else if (flag == "-e") {
+    if (is.null(options$plot_from)) {
+      options$plot_from <- "abs_cds_end"
+    } else {
+      stop("Error: Both -s and -e flags cannot be used simultaneously.")
     }
-    options[[sub("-", "", arg)]] <- args[next_index]
-  } else if (arg == "-l") {
-    options$add_labels <- TRUE
+    i <- i + 1
   } else {
-    remaining_args <- c(remaining_args, arg)
+    warning(paste("Unrecognized flag:", flag))
+    i <- i + 1
   }
 }
 
-# check for codon flag 
-if (!plot_from_specified) {
+# check for start or end flag 
+if (is.null(options$plot_from)) {
+  cat("Error: Either -s or -e flag must be specified.\n")
   help_message()
-  stop("Error: Either -s or -e flag must be specified.")
+  quit(status = 1)
 }
-
-# check remaining positional arguments
-if (length(remaining_args) != 5) {
-  help_message()
-  stop("Error: Incorrect number of positional arguments.")
-}
-
-input_file <- as.character(remaining_args[1])
-output_file <- as.character(remaining_args[2])
-col_name <- as.character(remaining_args[3])
-cutoff <- as.numeric(remaining_args[4])
-direction <- as.character(remaining_args[5])
 
 if (!file.exists(input_file)) {
   stop("Input file does not exist")
@@ -93,11 +106,11 @@ filter_calls <- function(file, col, cutoff, direction) {
 
 # calculate ratio of significant sites 
 compute_ratio <- function(calls, interval) {
-  # Filter calls to include only those within the specified range
+
+
   calls <- calls %>%
     filter(.data[[interval]] >= -100 & .data[[interval]] <= 100)
 
-  # Calculate the count of 'sig' and 'ns' at each position
   out_ratio <- calls %>%
     group_by(.data[[interval]], filter) %>%
     summarise(n = n(), .groups = 'drop') %>%
@@ -107,7 +120,7 @@ compute_ratio <- function(calls, interval) {
            ratio = sig / (sig + ns + 1e-9)) %>%
     rename(interval = 1)
 
-  # Calculate confidence intervals if the binom method is chosen
+
   if (options$ci_method == "binom") {
     conf_int <- binom.confint(out_ratio$sig, out_ratio$sig + out_ratio$ns, methods = "wilson")
     out_ratio <- mutate(out_ratio, lower = conf_int$lower, upper = conf_int$upper)
@@ -157,6 +170,8 @@ calls <- filter_calls(input_file, col_name, cutoff, direction)
 out_ratio <- compute_ratio(calls, options$plot_from)
 
 # optionally, write the data shown in the plot to a file 
+print(options$output_path)
+
 if (!is.null(options$output_path)) {
   write_tsv(out_ratio, options$output_path)
 }
