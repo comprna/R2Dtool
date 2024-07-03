@@ -298,8 +298,8 @@ Optional arguments:
 - The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metajunction data as a tab-separated file 
 ```
 
-More information on ```r2d``` plot functions can be found on the [R2Dtool wiki pages(
-https://github.com/comprna/R2Dtool/wiki/Visualising-RNA-feature-distributions-with-R2Dtool)]
+More information on ```r2d``` plot functions can be found on the [R2Dtool wiki pages](
+https://github.com/comprna/R2Dtool/wiki/Visualising-RNA-feature-distributions-with-R2Dtool)
 
 
 
