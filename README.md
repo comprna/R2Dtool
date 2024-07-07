@@ -42,7 +42,7 @@ R2Dtool has been tested on OS X 14.1, Red Hat Enterprise Linux 4.18.0, and shoul
 
 ```
 # clone R2Dtool and compile using Cargo 
-git clone git@github.com:comprna/R2Dtool.git && cd R2Dtool
+git clone https://github.com/comprna/R2Dtool.git && cd R2Dtool
 cargo build --release
 
 # add R2Dtool to PATH
