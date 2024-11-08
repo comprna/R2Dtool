@@ -244,6 +244,12 @@ fn main() {
                     .long("save-table")
                     .value_name("FILE")
                     .help("Save the aggregated metajunction data as a tab-separated file"))
+                .arg(Arg::new("reverse_focus")
+                    .short('r')
+                    .long("reverse")
+                    .help("Reverse the x-axis sign and show distribution of m6A sites around junctions instead of distribution of junctions around m6A sites")
+                    .action(clap::ArgAction::SetTrue)
+                    .required(false))
         )
         .subcommand(
             Command::new("plotMetaCodon")
@@ -393,17 +399,20 @@ fn main() {
             matches.get_one::<String>("cutoff").unwrap().clone(),
             matches.get_one::<String>("cutoff_type").unwrap().clone(),
         ];
-
+    
         if let Some(method) = matches.get_one::<String>("confidence_method") {
             args.extend_from_slice(&["-c".to_string(), method.clone()]);
         }
         if let Some(table) = matches.get_one::<String>("save_table") {
             args.extend_from_slice(&["-o".to_string(), table.clone()]);
         }
-
+        if matches.get_flag("reverse_focus") {      
+            args.push("-r".to_string());
+        }
+    
         println!("Arguments being passed to R2_plotMetaJunction.R:");
         println!("Rscript R2_plotMetaJunction.R {}", args.join(" "));
-
+    
         match generate_r_plots("R2_plotMetaJunction.R", &args, None) {
             Ok(_) => println!("PlotMetaJunction generated successfully."),
             Err(e) => {
