@@ -125,10 +125,13 @@ We can also study the distribution of m6A sites around exon-exon junctions in an
 $ r2d plotMetaJunction -i "./test/annotate.bed" -o "./test/metajunction_m6A.png" -f "fraction_modified" -u "10" -t "upper" 
 ```
 
-The plot shows the proportion of sites that have greater than 10% m6A methylation, with their distances to local splice-junctions: 
+The plot shows the proportion of sites that have greater than 10% m6A methylation, and their distances to local splice-junctions: 
+
+Distances to downstream junctions are indicated on the right side of the plot. Distances to upstream junctions are indicated on the left side of the plot. 
+      
 ![Distribution of m6A sites around exon junctions](./assets/metajunction_m6A.png)
 
-More information about R2Dtool plots is available on the [R2Dtool Wiki](https://github.com/comprna/R2Dtool/wiki/Visualising-RNA-feature-distributions-with-R2Dtool.
+More information about R2Dtool plots is available on the [R2Dtool Wiki](https://github.com/comprna/R2Dtool/wiki/Visualising-RNA-feature-distributions-with-R2Dtool).
 
 
 # R2Dtool file formats 
@@ -297,8 +300,7 @@ Optional arguments:
 - The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metajunction data as a tab-separated file 
 ```
 
-More information on ```r2d``` plot functions can be found on the [R2Dtool wiki pages](
-https://github.com/comprna/R2Dtool/wiki/Visualising-RNA-feature-distributions-with-R2Dtool)
+More information on ```r2d``` plot functions can be found on the [R2Dtool wiki pages](https://github.com/comprna/R2Dtool/wiki/Visualising-RNA-feature-distributions-with-R2Dtool)
 
 
 
