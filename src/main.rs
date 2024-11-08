@@ -325,6 +325,14 @@ fn main() {
                         .value_name("FILE")
                         .help("Save the aggregated metacodon data as a tab-separated file")
                 )
+                .arg(
+                    Arg::new("reverse_focus")
+                        .short('r')
+                        .long("reverse")
+                        .help("Reverse x-axis sign and show distribution of m6A sites")
+                        .action(clap::ArgAction::SetTrue)
+                        .required(false)
+                )
                 .group(
                     clap::ArgGroup::new("codon_type")
                         .required(true)
@@ -454,6 +462,10 @@ if let Some(matches) = matches.subcommand_matches("plotMetaCodon") {
         let save_table_path = save_table_path_buf.absolutize()
             .expect("Failed to absolutize save table path");    
         args.extend_from_slice(&["-o".to_string(), save_table_path.to_string_lossy().into_owned()]);
+    }
+
+    if matches.get_flag("reverse_focus") {
+        args.push("-R".to_string());
     }
 
     println!("Arguments being passed to R2_plotMetaCodon.R:");

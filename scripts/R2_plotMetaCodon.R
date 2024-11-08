@@ -9,13 +9,14 @@ cat("Arguments received:\n")
 cat(paste(commandArgs(trailingOnly = TRUE), collapse = " "), "\n")
 
 help_message <- function() {
-  cat("\nUsage: Rscript script.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output.tsv'] [-l] (-s | -e)\n")
+  cat("\nUsage: Rscript script.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output.tsv'] [-l] (-s | -e) [-R]\n")
   cat("Options:\n")
   cat("  -c  Set confidence interval method; default is 'loess', alternative is 'binom'.\n")
   cat("  -o  Set output path for processed data table.\n")
   cat("  -l  Add metagene labels to the plot; default is no labels.\n")
   cat("  -s  Plot from the start codon using 'abs_cds_start'.\n")
   cat("  -e  Plot from the end codon using 'abs_cds_end'.\n")
+  cat("  -R  Reverse x-axis sign and show distribution of m6A sites.\n")
   cat("  -h  Show this help message and exit.\n")
 }
 
@@ -36,7 +37,7 @@ col_name <- required_args[3]
 cutoff <- as.numeric(required_args[4])
 direction <- required_args[5]
 
-options <- list(ci_method = "loess", output_path = NULL, add_labels = FALSE, plot_from = NULL)
+options <- list(ci_method = "loess", output_path = NULL, add_labels = FALSE, plot_from = NULL, reverse_x = FALSE)
 
 # parse optional arguments
 i <- 1
@@ -66,6 +67,9 @@ while (i <= length(optional_args)) {
       stop("Error: Both -s and -e flags cannot be used simultaneously.")
     }
     i <- i + 1
+  } else if (flag == "-R") {
+    options$reverse_x <- TRUE
+    i <- i + 1
   } else {
     warning(paste("Unrecognized flag:", flag))
     i <- i + 1
@@ -91,12 +95,12 @@ filter_calls <- function(file, col, cutoff, direction) {
     message("Error reading the file: ", e$message)
     stop(e)
   })
-
+  
   # ensure the filter field column is present in the R2Dtool annotate output 
   if (!col %in% names(calls)) {
     stop(paste("Column", col, "does not exist in the input file. R2Dtool annotate must be run in header mode (i.e. with -H flag) for plotMetaCodon to work"))
   }
-
+  
   calls <- calls %>% 
     mutate(filter = if_else(.data[[col]] >= cutoff, "sig", "ns")) %>%
     mutate(filter = if (direction == "lower") if_else(filter == "sig", "ns", "sig") else filter)
@@ -106,11 +110,9 @@ filter_calls <- function(file, col, cutoff, direction) {
 
 # calculate ratio of significant sites 
 compute_ratio <- function(calls, interval) {
-
-
   calls <- calls %>%
     filter(.data[[interval]] >= -100 & .data[[interval]] <= 100)
-
+  
   out_ratio <- calls %>%
     group_by(.data[[interval]], filter) %>%
     summarise(n = n(), .groups = 'drop') %>%
@@ -119,8 +121,7 @@ compute_ratio <- function(calls, interval) {
            ns = if("ns" %in% names(.)) ns else 0,
            ratio = sig / (sig + ns + 1e-9)) %>%
     rename(interval = 1)
-
-
+  
   if (options$ci_method == "binom") {
     conf_int <- binom.confint(out_ratio$sig, out_ratio$sig + out_ratio$ns, methods = "wilson")
     out_ratio <- mutate(out_ratio, lower = conf_int$lower, upper = conf_int$upper)
@@ -133,35 +134,37 @@ plot_ratio <- function(out_ratio) {
   if (nrow(out_ratio) == 0 || is.infinite(max(out_ratio$interval))) {
     stop("out_ratio is empty or contains invalid interval data.")
   }
-
+  
   title_prefix <- ifelse(options$plot_from == "abs_cds_start", "start", "stop")
   if (options$plot_from == "abs_cds_start") {
     labels <- c("5' UTR", "CDS")
   } else {
     labels <- c("CDS", "3' UTR")
   }
-
-  p <- ggplot(out_ratio, aes(x = interval, y = ratio)) +
+  
+  x_values <- if(options$reverse_x) -out_ratio$interval else out_ratio$interval
+  x_label <- if(options$reverse_x) "Distribution of m6A sites around codon" else "Distance from m6A site to codon"
+  
+  p <- ggplot(out_ratio, aes(x = x_values, y = ratio)) +
     geom_point(alpha = 0.5, color = "red") +
     geom_vline(xintercept = 0, color = "blue", linetype = "dashed") +
     geom_smooth(method = "loess", se = options$ci_method == "loess") +
     theme_minimal() +
     labs(title = paste("Proportion of significant sites around", title_prefix, "codon"),
-         x = "Absolute metatranscriptomic location", y = "Proportion of significant sites")
-
+         x = x_label, y = "Proportion of significant sites")
+  
   if (options$add_labels) {
     max_ratio <- max(out_ratio$ratio, na.rm = TRUE)
     print(labels[1])
     print(labels[2])
     p <- p + geom_text(aes(label = labels[1]), x = -50, y = 0.9*max_ratio, vjust = -1,  size=12) +
-            geom_text(aes(label = labels[2]), x = 50, y = 0.9*max_ratio, vjust = -1,  size=12)
-
+      geom_text(aes(label = labels[2]), x = 50, y = 0.9*max_ratio, vjust = -1,  size=12)
   }
-
+  
   if (options$ci_method == "binom") {
     p <- p + geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.2)
   }
-
+  
   return(p)
 }
 

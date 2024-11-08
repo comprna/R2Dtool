@@ -282,6 +282,8 @@ Arguments:
 Optional arguments: 
 - The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
 - The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metacodon data as a tab-separated file 
+- The flag "-r" reverses the focus of the plot, so that codons are centered at x = 0 and feature abundance is shown around junctions, rather than vice-versa. See example *metajunction* plots above for more information. 
+
 ```
 **Plot** the **metajunction** distribution of RNA features:
 
@@ -299,6 +301,8 @@ Arguments:
 Optional arguments: 
 - The flag "-c [method]" can be used to change the strategy used for displaying confidence intervals between loess (default) or binoial confidence intervals (-c "binom")
 - The flag "-o [/path/to/table.tsv]" can be used to save the aggregated metajunction data as a tab-separated file 
+- The flag "-r" reverses the focus of the plot, so that junctions are centered at x = 0 and feature abundance is shown around junctions, rather than vice-versa. See example *metajunction* plots above for more information. 
+
 ```
 
 More information on ```r2d``` plot functions can be found on the [R2Dtool wiki pages](https://github.com/comprna/R2Dtool/wiki/Visualising-RNA-feature-distributions-with-R2Dtool)
