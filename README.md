@@ -127,7 +127,8 @@ $ r2d plotMetaJunction -i "./test/annotate.bed" -o "./test/metajunction_m6A.png"
 
 The plot shows the proportion of sites that have greater than 10% m6A methylation, and their distances to local splice-junctions: 
 
-Distances to downstream junctions are indicated on the right side of the plot. Distances to upstream junctions are indicated on the left side of the plot. 
+Distances to downstream junctions are indicated on the right side of the plot, and distances to upstream junctions are indicated on the left side of the plot.     
+To reverse the focus, so that splice junctions are centered at x = 0 and m6A sites are plotted around junctions, pass the '-r' flag to R2_plotMetaJunction.R.    
       
 ![Distribution of m6A sites around exon junctions](./assets/metajunction_m6A.png)
 

@@ -5,7 +5,7 @@ args <- commandArgs(trailingOnly = TRUE)
 
 # help message 
 if ("-h" %in% args || length(args) == 0) {
-  stop("\nUsage: Rscript R2_plotMetaJunction.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output_table.tsv']", call. = FALSE)
+  stop("\nUsage: Rscript R2_plotMetaJunction.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output_table.tsv'] [-r]", call. = FALSE)
 }
 
 # check for positional argument for the confidence interval method
@@ -25,9 +25,17 @@ if ("-o" %in% args) {
   args <- args[-c(index, index + 1)]  # Remove the flag and its value from the args
 }
 
+# check for optional -r flag to reverse x-axis
+reverse_x <- FALSE
+if ("-r" %in% args) {
+  reverse_x <- TRUE
+  index <- which(args == "-r")
+  args <- args[-index]  # Remove the flag from the args
+}
+
 # check remaining positional arguments
 if (length(args) != 5) {
-  stop("\nUsage: Rscript R2_plotMetaJunction.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output_table.tsv']", call. = FALSE)
+  stop("\nUsage: Rscript R2_plotMetaJunction.R '/path/to/annotated.bed' '/path/to/output.png' '<probability field>' '<cutoff>' '<upper/lower>' [-c 'loess'/'binom'] [-o '/path/to/output_table.tsv'] [-r]", call. = FALSE)
 }
 
 print(paste("Using", ci_method, "method for confidence intervals."))
@@ -48,7 +56,7 @@ suppressMessages(suppressWarnings(library(tidyverse)))
 
 # define function to label significance
 filter_calls <- function(input_file, col_name, cutoff, direction) {
-
+  
   calls <- read_tsv(file = input_file, col_names = T, guess_max = 99999999)
   
   # ensure the filter field column is present in the R2Dtool annotate output 
@@ -92,14 +100,15 @@ get_sj_data <- function(calls, ci_method) {
   return(sj_data)
 }
 
-plot_sj_data <- function(sj_data, ci_method) {
-  p <- ggplot(sj_data, aes(x = junc_dist, y = ratio)) + 
+plot_sj_data <- function(sj_data, ci_method, reverse_x = FALSE) {
+  p <- ggplot(sj_data, aes(x = if(reverse_x) -junc_dist else junc_dist, y = ratio)) + 
     geom_point(alpha = 0.5, color = "blue") + 
     geom_vline(xintercept = 0, col = "black") +
     theme(text = element_text(size = 12)) + 
     theme(plot.title = element_text(hjust = 0.5)) + 
     ggtitle("Proportion of significant sites around splice junctions in all transcripts") + 
-    xlab("Absolute distance to splice junction (NT)") + ylab("Proportion of significant sites") +
+    xlab(if(reverse_x) "Distribution of m6A sites around splice junction" else "Absolute distance to splice junction (NT)") + 
+    ylab("Proportion of significant sites") +
     theme_minimal()
   
   if (ci_method == "binom") {
@@ -126,8 +135,7 @@ if (!is.null(output_path)) {
 }
 
 # generate plot 
-p <- plot_sj_data(sj_data, ci_method)
+p <- plot_sj_data(sj_data, ci_method, reverse_x)
 
 # save plot 
 ggsave(output_file, p, scale = 4, width = 600, height = 400, units = c("px"))
-
