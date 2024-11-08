@@ -9,7 +9,7 @@ R2Dtool is a set of genomics utilities for handling, integrating, and viualising
   - **Visualise** isoform-aware RNA feature distributions: R2Dtool introduces isoform-aware **metatranscript** plots and **metajunction** plots to study the positonal distribution of RNA features around annotated RNA landmarks.
 
 
-> [R2Dtool is published in *Bioinformatics*](https://doi.org/10.1101/2022.09.23.509222)    
+> [R2Dtool is published in *Bioinformatics*](https://academic.oup.com/bioinformatics/article/40/8/btae495/7729116)    
 > Sethi, A. J., Mateos, P. A., Hayashi, R., Shirokikh, N. & Eyras, E. R2Dtool: integration and visualization of isoform-resolved RNA features. *Bioinformatics*, Volume 40, Issue 8 (2024)    
 > doi: 10.1093/bioinformatics/btae495
 
