@@ -34,7 +34,7 @@ R2Dtool is a set of genomics utilities for handling, integrating, and viualising
 R2Dtool has been tested on OS X 14.1, Red Hat Enterprise Linux 4.18.0, and should be broadly compatible with any system that support Rustc and R. We recommend using R2Dtool in an environment with at least 4 CPU cores and 12GB of free memory.
 
 - R2Dtool requires ```rustc``` and ```cargo``` for compilation. 
-- Additionally, ```R```, along with ```tidyverse``` and ```binom``` R packages, are requred to generate metaplots. 
+- Additionally, ```R```, along with ```tidyverse```, ```binom``` and ```ragg``` R packages, are requred to generate metaplots. 
 
 
 #### Compiling R2Dtool from source: 
